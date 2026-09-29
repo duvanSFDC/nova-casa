@@ -1,58 +1,76 @@
-# Salesforce DX Project
+# Nova Casa · Sprint 2: señales IoT en Salesforce
 
-Salesforce DX is a development approach that brings source-driven development, team collaboration, and continuous integration to the Salesforce Platform. Instead of working directly in an org through a web browser, you work with metadata as source files in a local DX project, track changes in version control, and deploy through automated processes.
+Las señales de los edificios llegan desde el simulador, entran como Platform Event y quedan registradas en Salesforce. Este repo cubre **US-201: recibir señales de los edificios**.
 
-This project template gets you started with the tools and structure you need to build Salesforce applications using source control, scratch orgs, and the Salesforce CLI.
+## Cómo fluye una señal
 
-## Prerequisites
+1. `TelemetryIngestionService` pide un lote al simulador (`GET /telemetry`) con el cursor guardado en `Ingestion_State__c`.
+2. Cada item se convierte en un `Telemetry_Signal__e` y se publica. Por cada evento se crea un `Signal_Log__c` en estado **Published**, junto con su `EventUuid`.
+3. El trigger `TelemetrySignalTrigger` recibe el evento y pasa el mismo log a **Processed**, con la hora de procesamiento y el `ReplayId`.
 
-Before you start, make sure you have:
+Así "publicada" y "procesada" son dos estados distintos del mismo registro. Si el bus rechaza la publicación, el log queda en **Publish_Failed** con el error.
 
-- **Salesforce CLI** - Download from [developer.salesforce.com/tools/salesforcecli](https://developer.salesforce.com/tools/salesforcecli). See [Install Salesforce CLI](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_install_cli.htm) for details.
-- **VS Code with Salesforce Extension Pack** - See [Installation Instructions](https://developer.salesforce.com/docs/platform/sfvscode-extensions/guide/install.html) for details. Includes the Agentforce Vibes extension.
-- **A development org** - Sign up for a free Developer Edition org [here](https://developer.salesforce.com/signup).
-- **Dev Hub enabled** (optional, required to create scratch orgs) - You can enable Dev Hub in your development org under Setup > Dev Hub.  See [Provide Developers Access to Salesforce DX Tools](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_setup_dx_tools.htm).
+Cada log guarda cuatro horas por separado:
 
-## Project Structure
+| Campo | Qué es |
+| --- | --- |
+| `Occurred_At__c` | Cuándo midió el sensor (`occurredAt`) |
+| `Source_Published_At__c` | Cuándo lo publicó el simulador (`publishedAt`) |
+| `Published_At__c` | Cuándo Salesforce lo publicó en el bus |
+| `Processed_At__c` | Cuándo el suscriptor lo procesó |
 
-Your DX project follows this structure:
+## Qué hay en el repo
 
-- **`force-app/main/default/`** - Your metadata source files live in this default package directory. You can configure additional package directories in the `sfdx-project.json` file.
-- **`config/`** - Scratch org definitions and project settings
-- **`scripts/`** - Automation scripts for common tasks
-- **`sfdx-project.json`** - Project manifest that defines package directories, namespace, API version, and other project-level settings
+- `objects/Telemetry_Signal__e`: el contrato. Tiene edificio, activo, medición, valor, unidad, fecha de origen, `messageId` y `deliveryId`, y guarda el payload crudo.
+- `objects/Signal_Log__c`: la traza de cada señal.
+- `objects/Ingestion_State__c`: el cursor del simulador y cuándo vence la sesión. Es un objeto y no un Custom Setting, porque el cursor pasa de 255 caracteres.
+- `classes/NovaSimulatorClient`: las llamadas HTTP, usando la Named Credential `Nova_Simulator`.
+- `classes/TelemetrySignalMapper`, `TelemetryPublisher`, `TelemetrySignalSubscriber`, `TelemetryIngestionService` y `TelemetryIngestionJob` (el Queueable).
+- `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta.
 
-See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm).
+## Antes de empezar
 
-## Get Started
+1. La org debe tener la **External Credential** y la **Named Credential** `Nova_Simulator`, con el token en el principal `Nova_Team`, y el permission set **Nova Simulator Access** asignado. El token se configura solo en la org y nunca se sube a este repo.
+2. Hay que tener el Salesforce CLI (`sf`) autenticado contra la org. Aquí el alias es `novacasa`.
 
-Ready to start developing? The [Get Started with Salesforce DX](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_get_started_dx.htm) guide walks you through your first project, from creating a scratch org to creating a simple Apex class or LWC to deploying your code to a sandbox.
+## Recorrido reproducible
 
-## Common Salesforce CLI Commands
+```bash
+# 1. Desplegar y correr las pruebas
+sf project deploy start --source-dir force-app --target-org novacasa \
+  --test-level RunSpecifiedTests \
+  --tests TelemetryIngestionServiceTest --tests TelemetryIngestionCursorTest
 
-Here are common CLI commands that you'll use the most:
+# 2. Dar acceso a quien ejecuta (tu usuario y el de integración)
+sf org assign permset --name Nova_Integration --target-org novacasa
 
-- `sf org login web`: Authorize an org
-- `sf org open`: Open your org in a browser
-- `sf org create scratch`: Create a scratch org
-- `sf project deploy start`: Deploy metadata to your org
-- `sf project retrieve start`: Retrieve metadata from your org
-- `sf template generate <artifact>`: Scaffold new components, such as Apex classes and triggers, LWC components, Lightning apps, and more
-- `sf apex <command>`: Run Apex tests, run anonymous Apex blocks, and view logs
-- `sf data <command>`: Work with test data
-- `sf alias <command>`: Manage org aliases
-- `sf config <command>`: Configure CLI settings
+# 3. Traer un lote real del simulador
+sf apex run --file scripts/apex/ingest-once.apex --target-org novacasa
 
-## Use Agentforce Vibes to Build Lightning Apps
+# 4. Ver la traza (esperar unos segundos a que procese el suscriptor)
+sf data query --file scripts/soql/signal-trace.soql --target-org novacasa
+```
 
-Transform your ideas into custom Lightning apps that extend CRM workflows directly in Lightning Experience. Through natural conversations with Agentforce Vibes, implement custom objects and fields, complex business logic, and dynamic UI components. See [Build a Lightning App Using Agentforce Vibes](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/lexapp-overview.html).
+Para seguir leyendo lotes en segundo plano está `scripts/apex/ingest-async.apex`. Para empezar un escenario nuevo del simulador, `scripts/apex/reset-session.apex`, que borra el cursor guardado.
 
-## Additional Resources
+## Evidencia (28 de septiembre de 2026)
 
-- [Agentforce Vibes Developer Guide](https://developer.salesforce.com/docs/platform/einstein-for-devs/guide/einstein-overview.html)
-- [Salesforce CLI Installation Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/)
-- [Salesforce CLI Plugin Development Guide](https://developer.salesforce.com/docs/platform/salesforce-cli-plugin/guide/conceptual-overview.html)
-- [Salesforce VS Code Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
+Con una corrida real se recibieron 20 señales, se publicaron 20 y las 20 terminaron en Processed. Por ejemplo, este es el recorrido de una clave:
 
+| | |
+| --- | --- |
+| `messageId` / `deliveryId` | `msg_000015` / `dlv_000015` (CONNECTIVITY) |
+| Log | `LOG-000037` · EventUuid `5ff90c39-0368-4e3a-94c5-299bd8c5294d` |
+| Estado | Published → Processed |
+| Horas | publicada en Salesforce 04:14:55 · procesada 04:14:57 (UTC) |
+
+## Decisiones
+
+- **La ingesta corre en modo sistema.** Desde la API 67, Apex consulta en modo usuario por defecto. El suscriptor corre como *Automated Process*, así que el estado y los logs se leen y escriben con `SYSTEM_MODE` explícito. La seguridad por usuario (BR-208) se aplica en lo que consultan Laura, Javier y Camila.
+- **Una sola sesión del simulador.** Cada `POST /session` es un escenario nuevo, así que solo se abre cuando no hay cursor o cuando la sesión vence (dura 30 días).
+- **Ritmo de consulta.** El simulador sugiere esperar 10 segundos entre lotes, pero un Queueable no puede esperar menos de 1 minuto. Por eso el job se vuelve a encolar cada minuto.
+
+## Lo que mostró el simulador
+
+- **Hay duplicados.** `msg_000014` llegó dos veces, con `deliveryId` distintos (`dlv_000014` y `dlv_000018`) y el mismo `occurredAt`. Hoy se registran las dos entregas. La clave para detectar el duplicado es `messageId`, no `deliveryId`.
+- **El reloj es simulado.** `occurredAt` puede quedar adelante de la hora real de Salesforce. Para saber si una señal llegó atrasada, hay que comparar `occurredAt` entre señales del mismo activo, no contra la hora de Salesforce.

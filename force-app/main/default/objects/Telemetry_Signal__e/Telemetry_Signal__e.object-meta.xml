@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Señal entregada por el simulador de Nova Casa. Se publica después del commit para que el log de publicación exista antes de que el suscriptor la procese.</description>
+    <eventType>HighVolume</eventType>
+    <label>Telemetry Signal</label>
+    <pluralLabel>Telemetry Signals</pluralLabel>
+    <publishBehavior>PublishAfterCommit</publishBehavior>
+</CustomObject>

@@ -1,0 +1,5 @@
+SELECT Name, Message_Id__c, Delivery_Id__c, Message_Type__c, Status__c,
+    Occurred_At__c, Source_Published_At__c, Published_At__c, Processed_At__c, Event_Uuid__c, Error__c
+FROM Signal_Log__c
+ORDER BY CreatedDate DESC
+LIMIT 20
