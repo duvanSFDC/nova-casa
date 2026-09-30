@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Qué medición acepta cada tipo de equipo y en qué unidad. Un registro por tipo de equipo y tipo de medición. Si una señal trae una medición sin registro, o una unidad distinta, se rechaza. Los límites de aviso y crítico se agregan en BR-204.</description>
+    <label>Measurement Threshold</label>
+    <pluralLabel>Measurement Thresholds</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

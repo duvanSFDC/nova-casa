@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Message_Key__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Huella del aviso que originó la intervención (messageId de la señal crítica). Es única: reenviar el mismo mensaje no puede abrir un segundo trabajo (BR-205).</description>
+    <externalId>true</externalId>
+    <inlineHelpText>Clave del aviso que originó esta intervención.</inlineHelpText>
+    <label>Message Key</label>
+    <length>80</length>
+    <required>false</required>
+    <trackFeedHistory>false</trackFeedHistory>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

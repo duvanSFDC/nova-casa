@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Id__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Código del edificio en el simulador (building.id, por ejemplo BLD-BOG-001). Una señal solo se acepta si su código existe aquí; la señal nunca crea edificios.</description>
+    <externalId>true</externalId>
+    <inlineHelpText>Código del edificio que envía el simulador, por ejemplo BLD-BOG-001.</inlineHelpText>
+    <label>External Id</label>
+    <length>40</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

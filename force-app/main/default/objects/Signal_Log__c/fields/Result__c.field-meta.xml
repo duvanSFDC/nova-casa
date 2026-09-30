@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Result__c</fullName>
+    <description>Qué decidió el suscriptor con la señal. Es distinto de Status__c, que dice en qué etapa del flujo va (publicada o procesada).</description>
+    <inlineHelpText>Aceptada: señal válida de un edificio y equipo conocidos. Rechazada: ver el motivo y el error. Duplicada: su messageId ya se había procesado. Atrasada: es más vieja que la lectura actual y no la reemplaza.</inlineHelpText>
+    <label>Result</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Accepted</fullName>
+                <default>false</default>
+                <label>Aceptada</label>
+            </value>
+            <value>
+                <fullName>Rejected</fullName>
+                <default>false</default>
+                <label>Rechazada</label>
+            </value>
+            <value>
+                <fullName>Duplicate</fullName>
+                <default>false</default>
+                <label>Duplicada</label>
+            </value>
+            <value>
+                <fullName>Late</fullName>
+                <default>false</default>
+                <label>Atrasada</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

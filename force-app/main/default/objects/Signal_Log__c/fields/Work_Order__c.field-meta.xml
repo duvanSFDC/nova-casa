@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Work_Order__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Intervención relacionada con la señal, si existe. Es opcional: Apex no crea el Work Order, lo abre la operadora con un botón.</description>
+    <label>Work Order</label>
+    <referenceTo>WorkOrder</referenceTo>
+    <relationshipLabel>Signal Logs</relationshipLabel>
+    <relationshipName>Signal_Logs</relationshipName>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>
