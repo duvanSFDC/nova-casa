@@ -1,0 +1,61 @@
+/**
+ * Lo que el suscriptor decidió sobre una señal: el resultado, el motivo del rechazo,
+ * un detalle legible para Camila, si es seguro reintentar y, cuando se reconocieron,
+ * el equipo y el edificio. Los valores son los del picklist de Signal_Log__c.
+ */
+public inherited sharing class TelemetrySignalOutcome {
+    public static final String RESULT_ACCEPTED = 'Accepted';
+    public static final String RESULT_REJECTED = 'Rejected';
+
+    public static final String REASON_INCOMPLETE = 'INCOMPLETE';
+    public static final String REASON_UNKNOWN_MESSAGE_TYPE = 'UNKNOWN_MESSAGE_TYPE';
+    public static final String REASON_UNKNOWN_BUILDING = 'UNKNOWN_BUILDING';
+    public static final String REASON_UNKNOWN_ASSET = 'UNKNOWN_ASSET';
+    public static final String REASON_ASSET_NOT_IN_BUILDING = 'ASSET_NOT_IN_BUILDING';
+    public static final String REASON_UNSUPPORTED_MEASUREMENT = 'UNSUPPORTED_MEASUREMENT';
+    public static final String REASON_INCOMPATIBLE_UNIT = 'INCOMPATIBLE_UNIT';
+
+    private static final Integer DETAIL_MAX = 255;
+
+    public String result { get; private set; }
+    public String reason { get; private set; }
+    public String detail { get; private set; }
+    public Boolean retrySafe { get; private set; }
+    public Id assetId { get; private set; }
+    public Id locationId { get; private set; }
+
+    private TelemetrySignalOutcome(String result, String reason, String detail, Boolean retrySafe) {
+        this.result = result;
+        this.reason = reason;
+        this.detail = detail == null ? null : detail.left(DETAIL_MAX);
+        this.retrySafe = retrySafe;
+    }
+
+    public static TelemetrySignalOutcome accepted(Id assetId, Id locationId) {
+        return new TelemetrySignalOutcome(RESULT_ACCEPTED, null, null, false).withReferences(assetId, locationId);
+    }
+
+    /**
+     * retrySafe es verdadero cuando el rechazo se corrige en Salesforce (el catálogo o la CMDT)
+     * y falso cuando el dato de origen está mal y reprocesarlo daría lo mismo.
+     */
+    public static TelemetrySignalOutcome rejected(String reason, String detail, Boolean retrySafe) {
+        return new TelemetrySignalOutcome(RESULT_REJECTED, reason, detail, retrySafe);
+    }
+
+    public TelemetrySignalOutcome withReferences(Id assetId, Id locationId) {
+        this.assetId = assetId;
+        this.locationId = locationId;
+        return this;
+    }
+
+    /** Escribe la decisión en el log. Limpia lo que hubiera de un procesamiento anterior. */
+    public void applyTo(Signal_Log__c log) {
+        log.Result__c = result;
+        log.Reason__c = reason;
+        log.Error__c = detail;
+        log.Retry_Safe__c = retrySafe;
+        log.Asset__c = assetId;
+        log.Location__c = locationId;
+    }
+}
