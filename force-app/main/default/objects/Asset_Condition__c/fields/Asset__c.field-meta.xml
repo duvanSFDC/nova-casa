@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Asset__c</fullName>
+    <deleteConstraint>Restrict</deleteConstraint>
+    <description>Asset this reading belongs to. Required, because a condition without an asset cannot appear on the operator screen.</description>
+    <label>Asset</label>
+    <referenceTo>Asset</referenceTo>
+    <relationshipLabel>Asset Conditions</relationshipLabel>
+    <relationshipName>Asset_Conditions</relationshipName>
+    <required>true</required>
+    <trackTrending>false</trackTrending>
+    <type>Lookup</type>
+</CustomField>

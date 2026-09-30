@@ -1,0 +1,86 @@
+<template>
+    <lightning-card>
+        <h1 slot="title" class="slds-text-heading_medium">Estado operativo</h1>
+        <div slot="actions">
+            <lightning-button
+                label="Actualizar"
+                onclick={handleRefresh}
+                disabled={isLoading}
+            ></lightning-button>
+        </div>
+        <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+            <div class="slds-grid slds-wrap slds-gutters_small slds-m-bottom_small">
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-combobox
+                        name="building"
+                        label="Edificio"
+                        value={buildingId}
+                        options={buildingOptions}
+                        placeholder="Todos los edificios"
+                        onchange={handleBuildingChange}
+                        disabled={isLoading}
+                    ></lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+                    <lightning-combobox
+                        name="severity"
+                        label="Severidad"
+                        value={severity}
+                        options={severityOptions}
+                        placeholder="Todas"
+                        onchange={handleSeverityChange}
+                        disabled={isLoading}
+                    ></lightning-combobox>
+                </div>
+                <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3 filter-action">
+                    <lightning-button
+                        label="Limpiar filtros"
+                        onclick={handleClearFilters}
+                        disabled={clearDisabled}
+                    ></lightning-button>
+                </div>
+            </div>
+
+            <template lwc:if={showConsultedAt}>
+                <p class="slds-m-bottom_small">Consultado: {consultedAtLabel}</p>
+            </template>
+
+            <template lwc:if={isLoading}>
+                <div role="status" class="slds-is-relative spinner-holder">
+                    <lightning-spinner
+                        alternative-text="Consultando los equipos…"
+                        size="small"
+                    ></lightning-spinner>
+                </div>
+                <p class="slds-align_absolute-center">Consultando los equipos…</p>
+            </template>
+
+            <template lwc:if={isNoAssets}>
+                <p role="status">No hay equipos para mostrar.</p>
+            </template>
+
+            <template lwc:if={isFilterEmpty}>
+                <div role="status">
+                    <p class="slds-m-bottom_small">No hay activos con estos filtros.</p>
+                    <lightning-button label="Limpiar filtros" onclick={handleClearFilters}></lightning-button>
+                </div>
+            </template>
+
+            <template lwc:if={isError}>
+                <div role="alert">
+                    <p class="slds-m-bottom_small">{errorMessage}</p>
+                    <lightning-button label="Reintentar" onclick={handleRefresh}></lightning-button>
+                </div>
+            </template>
+
+            <template lwc:if={isData}>
+                <lightning-datatable
+                    key-field="rowKey"
+                    data={tableRows}
+                    columns={columns}
+                    hide-checkbox-column
+                ></lightning-datatable>
+            </template>
+        </div>
+    </lightning-card>
+</template>
