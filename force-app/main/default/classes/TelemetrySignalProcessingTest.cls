@@ -36,12 +36,28 @@ private class TelemetrySignalProcessingTest {
         return new Asset(Name = name, External_Id__c = code, Asset_Type__c = type, LocationId = locationId, AccountId = accountId);
     }
 
-    /** Mismas unidades que la CMDT desplegada, para no depender de que alguien la edite. */
+    /** Mismas unidades y límites de ejemplo que la CMDT desplegada, para no depender de que alguien la edite. */
     private static void useCatalog() {
-        MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(Asset_Type__c = 'WATER_PUMP', Measurement_Type__c = 'WATER_PRESSURE', Unit__c = 'BAR'),
-            new Measurement_Threshold__mdt(Asset_Type__c = 'ENERGY_METER', Measurement_Type__c = 'ENERGY_CONSUMPTION', Unit__c = 'KWH_PER_15_MIN')
+        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'WATER_PUMP',
+                Measurement_Type__c = 'WATER_PRESSURE',
+                Unit__c = 'BAR',
+                Alert_Direction__c = 'Below',
+                Warning_Limit__c = 1.5,
+                Critical_Limit__c = 1.0
+            ),
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'ENERGY_METER',
+                Measurement_Type__c = 'ENERGY_CONSUMPTION',
+                Unit__c = 'KWH_PER_15_MIN',
+                Alert_Direction__c = 'Above',
+                Warning_Limit__c = 40,
+                Critical_Limit__c = 60
+            )
         };
+        MeasurementCatalog.testRecords = records;
+        MeasurementSeverityClassifier.testRecords = records;
     }
 
     private static Telemetry_Signal__e measurement(String key, String buildingCode, String assetCode, String type, Decimal value, String unit) {
@@ -307,6 +323,15 @@ private class TelemetrySignalProcessingTest {
 
     @IsTest
     static void compatibilityComesFromTheCatalogNotFromTheCode() {
+        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'WATER_PUMP',
+                Measurement_Type__c = 'WATER_PRESSURE',
+                Alert_Direction__c = 'Below',
+                Warning_Limit__c = 1.5,
+                Critical_Limit__c = 1.0
+            )
+        };
         MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>();
         List<Telemetry_Signal__e> events = new List<Telemetry_Signal__e>{ measurement('no-catalog', BOG, PUMP, 'WATER_PRESSURE', 0.7, 'BAR') };
 

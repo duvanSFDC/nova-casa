@@ -1,7 +1,7 @@
 /**
  * Lo que el suscriptor decidió sobre una señal: el resultado, el motivo del rechazo,
- * un detalle legible para Camila, si es seguro reintentar y, cuando se reconocieron,
- * el equipo y el edificio. Los valores son los del picklist de Signal_Log__c.
+ * un detalle legible para Camila, si es seguro reintentar, cuando se reconocieron,
+ * el equipo y el edificio, y la severidad de una medición aceptada. Los valores son los del picklist de Signal_Log__c.
  */
 public inherited sharing class TelemetrySignalOutcome {
     public static final String RESULT_ACCEPTED = 'Accepted';
@@ -14,6 +14,9 @@ public inherited sharing class TelemetrySignalOutcome {
     public static final String REASON_ASSET_NOT_IN_BUILDING = 'ASSET_NOT_IN_BUILDING';
     public static final String REASON_UNSUPPORTED_MEASUREMENT = 'UNSUPPORTED_MEASUREMENT';
     public static final String REASON_INCOMPATIBLE_UNIT = 'INCOMPATIBLE_UNIT';
+    public static final String REASON_THRESHOLD_MISSING = MeasurementSeverityClassifier.REASON_THRESHOLD_MISSING;
+    public static final String REASON_THRESHOLD_INCOMPLETE = MeasurementSeverityClassifier.REASON_THRESHOLD_INCOMPLETE;
+    public static final String REASON_THRESHOLD_CONTRADICTORY = MeasurementSeverityClassifier.REASON_THRESHOLD_CONTRADICTORY;
 
     private static final Integer DETAIL_MAX = 255;
 
@@ -23,6 +26,8 @@ public inherited sharing class TelemetrySignalOutcome {
     public Boolean retrySafe { get; private set; }
     public Id assetId { get; private set; }
     public Id locationId { get; private set; }
+    /** Solo en mediciones aceptadas: Normal, Warning o Critical según los límites vigentes. */
+    public String severity { get; private set; }
 
     private TelemetrySignalOutcome(String result, String reason, String detail, Boolean retrySafe) {
         this.result = result;
@@ -49,6 +54,11 @@ public inherited sharing class TelemetrySignalOutcome {
         return this;
     }
 
+    public TelemetrySignalOutcome withSeverity(String severity) {
+        this.severity = severity;
+        return this;
+    }
+
     /** Escribe la decisión en el log. Limpia lo que hubiera de un procesamiento anterior. */
     public void applyTo(Signal_Log__c log) {
         log.Result__c = result;
@@ -57,5 +67,6 @@ public inherited sharing class TelemetrySignalOutcome {
         log.Retry_Safe__c = retrySafe;
         log.Asset__c = assetId;
         log.Location__c = locationId;
+        log.Severity__c = severity;
     }
 }

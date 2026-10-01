@@ -46,6 +46,21 @@
                 <default>false</default>
                 <label>Unidad incompatible</label>
             </value>
+            <value>
+                <fullName>THRESHOLD_MISSING</fullName>
+                <default>false</default>
+                <label>Sin límites configurados</label>
+            </value>
+            <value>
+                <fullName>THRESHOLD_INCOMPLETE</fullName>
+                <default>false</default>
+                <label>Límites incompletos</label>
+            </value>
+            <value>
+                <fullName>THRESHOLD_CONTRADICTORY</fullName>
+                <default>false</default>
+                <label>Límites contradictorios</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

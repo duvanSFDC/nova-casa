@@ -3,6 +3,14 @@
     <label>Medidor de agua · Consumo</label>
     <protected>false</protected>
     <values>
+        <field>Alert_Direction__c</field>
+        <value xsi:type="xsd:string">Above</value>
+    </values>
+    <values>
+        <field>Critical_Limit__c</field>
+        <value xsi:type="xsd:double">1000</value>
+    </values>
+    <values>
         <field>Asset_Type__c</field>
         <value xsi:type="xsd:string">WATER_METER</value>
     </values>
@@ -13,5 +21,9 @@
     <values>
         <field>Unit__c</field>
         <value xsi:type="xsd:string">LITER_PER_15_MIN</value>
+    </values>
+    <values>
+        <field>Warning_Limit__c</field>
+        <value xsi:type="xsd:double">600</value>
     </values>
 </CustomMetadata>

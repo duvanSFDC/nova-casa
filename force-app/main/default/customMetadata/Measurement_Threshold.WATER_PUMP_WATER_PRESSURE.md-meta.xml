@@ -3,6 +3,14 @@
     <label>Bomba de agua · Presión</label>
     <protected>false</protected>
     <values>
+        <field>Alert_Direction__c</field>
+        <value xsi:type="xsd:string">Below</value>
+    </values>
+    <values>
+        <field>Critical_Limit__c</field>
+        <value xsi:type="xsd:double">1.0</value>
+    </values>
+    <values>
         <field>Asset_Type__c</field>
         <value xsi:type="xsd:string">WATER_PUMP</value>
     </values>
@@ -13,5 +21,9 @@
     <values>
         <field>Unit__c</field>
         <value xsi:type="xsd:string">BAR</value>
+    </values>
+    <values>
+        <field>Warning_Limit__c</field>
+        <value xsi:type="xsd:double">1.5</value>
     </values>
 </CustomMetadata>
