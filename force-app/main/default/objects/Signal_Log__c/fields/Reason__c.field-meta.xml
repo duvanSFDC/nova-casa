@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reason__c</fullName>
+    <description>Por qué se rechazó la señal. Solo se llena cuando Result__c es Rejected. El detalle legible (qué campo o qué valor) queda en Error__c.</description>
+    <inlineHelpText>Motivo del rechazo. El detalle está en el campo Error.</inlineHelpText>
+    <label>Reason</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>INCOMPLETE</fullName>
+                <default>false</default>
+                <label>Señal incompleta</label>
+            </value>
+            <value>
+                <fullName>UNKNOWN_MESSAGE_TYPE</fullName>
+                <default>false</default>
+                <label>Tipo de mensaje desconocido</label>
+            </value>
+            <value>
+                <fullName>UNKNOWN_BUILDING</fullName>
+                <default>false</default>
+                <label>Edificio desconocido</label>
+            </value>
+            <value>
+                <fullName>UNKNOWN_ASSET</fullName>
+                <default>false</default>
+                <label>Equipo desconocido</label>
+            </value>
+            <value>
+                <fullName>ASSET_NOT_IN_BUILDING</fullName>
+                <default>false</default>
+                <label>El equipo no pertenece al edificio</label>
+            </value>
+            <value>
+                <fullName>UNSUPPORTED_MEASUREMENT</fullName>
+                <default>false</default>
+                <label>Medición no admitida para el equipo</label>
+            </value>
+            <value>
+                <fullName>INCOMPATIBLE_UNIT</fullName>
+                <default>false</default>
+                <label>Unidad incompatible</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

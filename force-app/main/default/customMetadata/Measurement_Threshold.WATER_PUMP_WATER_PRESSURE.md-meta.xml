@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Bomba de agua · Presión</label>
+    <protected>false</protected>
+    <values>
+        <field>Asset_Type__c</field>
+        <value xsi:type="xsd:string">WATER_PUMP</value>
+    </values>
+    <values>
+        <field>Measurement_Type__c</field>
+        <value xsi:type="xsd:string">WATER_PRESSURE</value>
+    </values>
+    <values>
+        <field>Unit__c</field>
+        <value xsi:type="xsd:string">BAR</value>
+    </values>
+</CustomMetadata>

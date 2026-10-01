@@ -56,7 +56,7 @@ public inherited sharing class TelemetryPublisher {
         );
     }
 
-    private static String describe(List<Database.Error> errors) {
+    public static String describe(List<Database.Error> errors) {
         List<String> messages = new List<String>();
         for (Database.Error error : errors) {
             messages.add(error.getStatusCode() + ': ' + error.getMessage());
