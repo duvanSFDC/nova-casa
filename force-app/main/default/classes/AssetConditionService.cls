@@ -59,11 +59,13 @@ public inherited sharing class AssetConditionService {
             Boolean isWinner = winnerIndexByKey.get(key) == i;
             Boolean isNewer = current == null || events[i].Occurred_At__c > current;
             if (isWinner && isNewer) {
-                toUpsertByKey.put(key, buildCondition(key, outcomes[i].assetId, events[i]));
+                toUpsertByKey.put(key, buildCondition(key, outcomes[i], events[i]));
             } else {
+                // La atrasada conserva su severidad calculada para que el log la muestre.
                 outcomes.set(
                     i,
                     TelemetrySignalOutcome.late(outcomes[i].assetId, outcomes[i].locationId, lateDetail(current))
+                        .withSeverity(outcomes[i].severity)
                 );
             }
         }
@@ -84,25 +86,26 @@ public inherited sharing class AssetConditionService {
         return evt.Measurement_Type__c == null ? null : evt.Measurement_Type__c.trim().toUpperCase();
     }
 
-    private static Asset_Condition__c buildCondition(String key, Id assetId, Telemetry_Signal__e evt) {
+    private static Asset_Condition__c buildCondition(String key, TelemetrySignalOutcome outcome, Telemetry_Signal__e evt) {
         String type = measurementType(evt);
         Asset_Condition__c condition = new Asset_Condition__c(
             Asset_Measurement_Key__c = key,
             Name = key.abbreviate(NAME_MAX),
-            Asset__c = assetId,
+            Asset__c = outcome.assetId,
             Measurement_Type__c = type,
             Occurred_At__c = evt.Occurred_At__c,
             Sensor_Id__c = evt.Sensor_Id__c
         );
         if (CONNECTIVITY_TYPE == type) {
             // La fila de conectividad guarda el estado del dispositivo, sin valor ni unidad.
+            // No es una medición: no se clasifica, queda Normal (ver README).
             condition.Communication_Status__c = evt.Communication_Status__c;
-            condition.Severity__c = SeverityClassifier.classifyConnectivity(evt.Communication_Status__c);
+            condition.Severity__c = MeasurementSeverityClassifier.SEVERITY_NORMAL;
         } else {
+            // La severidad real la calculó el procesador (BR-206) y viaja en el outcome.
             condition.Measurement_Value__c = evt.Measurement_Value__c;
             condition.Measurement_Unit__c = evt.Measurement_Unit__c;
-            // El tipo de equipo lo cableará BR-206 cuando la clasificación lea los umbrales.
-            condition.Severity__c = SeverityClassifier.classifyMeasurement(null, type, evt.Measurement_Value__c);
+            condition.Severity__c = outcome.severity;
         }
         return condition;
     }

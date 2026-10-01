@@ -50,7 +50,8 @@ sf project deploy start --source-dir force-app --target-org novacasa \
   --test-level RunSpecifiedTests \
   --tests TelemetryIngestionServiceTest --tests TelemetryIngestionCursorTest \
   --tests TelemetrySignalValidatorTest --tests TelemetrySignalProcessingTest \
-  --tests TelemetryStateProcessingTest --tests OperatorStatusServiceTest
+  --tests TelemetryStateProcessingTest --tests MeasurementSeverityClassifierTest \
+  --tests TelemetrySignalSeverityTest --tests OperatorStatusServiceTest
 
 # 2. Dar acceso a quien ejecuta (tu usuario y el de integración)
 sf org assign permset --name Nova_Integration --target-org novacasa
@@ -106,7 +107,7 @@ La prueba automática `TelemetryStateProcessingTest` cubre esto de forma determi
 - **La compatibilidad sale de la CMDT, no del código.** La unidad válida de cada medición vive en `Measurement_Threshold__mdt` y se lee con `getAll()` (sin SOQL). Cambiar un umbral no exige redesplegar (BR-204). Además, la medición se compara contra el tipo de equipo guardado en Salesforce, no contra el que trae el mensaje.
 - **Solo una lectura estrictamente más nueva reemplaza el estado (BR-203).** Se compara por `occurredAt`, nunca contra `Datetime.now()`. En empate exacto de `occurredAt` se conserva la lectura actual y la que llega queda Atrasada (Late); así se cumple el KPI de "0 sobrescrituras". La regla vale igual dentro de una colección y entre publicaciones, aunque el bus parta el lote en varias invocaciones del suscriptor.
 - **Una señal atrasada no dispara acción.** Una lectura más vieja (o empatada) queda Late y no actualiza `Asset_Condition__c` ni abre un Work Order, sin importar su severidad. Apex nunca abre Work Orders; eso lo hace Laura con un botón.
-- **La severidad es un placeholder por ahora.** `SeverityClassifier` siempre devuelve `Normal`. La clasificación real (Normal/Warning/Critical) depende de los umbrales que dará Emiliano y es trabajo de BR-204 y BR-206; se aisló en esa clase para no tocar el resto cuando lleguen los valores.
+- **La severidad la calcula `MeasurementSeverityClassifier` (BR-204/BR-206).** El procesador compara la lectura con los límites de `Measurement_Threshold__mdt` (aviso, crítico y dirección) y la severidad viaja en `TelemetrySignalOutcome.severity`; US-203 solo la guarda en `Asset_Condition__c`. Los valores de los límites son de ejemplo hasta que Emiliano entregue los reales; sin límites válidos la señal se rechaza con un motivo (`THRESHOLD_*`), nunca se asume `Normal`. La conectividad no es una medición: su fila queda en `Normal`.
 - **El estado guarda el tipo de medición tal como llega del simulador.** La fila usa `WATER_PRESSURE`, `TEMPERATURE`, etc. (y `CONNECTIVITY` para la conectividad). *Pendiente de coordinación con US-207:* el LWC de Laura hoy mapea etiquetas en minúscula (`pressure`, `temperature`) y no dibuja la fila de conectividad; eso se ajusta en esa historia.
 - **La ingesta corre en modo sistema.** Desde la API 67, Apex consulta en modo usuario por defecto. El suscriptor corre como *Automated Process*, así que el estado y los logs se leen y escriben con `SYSTEM_MODE` explícito. La seguridad por usuario (BR-208) se aplica en lo que consultan Laura, Javier y Camila.
 - **Una sola sesión del simulador.** Cada `POST /session` es un escenario nuevo, así que solo se abre cuando no hay cursor o cuando la sesión vence (dura 30 días).

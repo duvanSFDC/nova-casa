@@ -30,11 +30,28 @@ private class TelemetryStateProcessingTest {
         return new Asset(Name = name, External_Id__c = code, Asset_Type__c = type, LocationId = locationId, AccountId = accountId);
     }
 
+    /** Unidades y límites de ejemplo. Los límites hacen que los valores de estas pruebas clasifiquen Normal. */
     private static void useCatalog() {
-        MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(Asset_Type__c = 'WATER_PUMP', Measurement_Type__c = 'WATER_PRESSURE', Unit__c = 'BAR'),
-            new Measurement_Threshold__mdt(Asset_Type__c = 'ENERGY_METER', Measurement_Type__c = 'ENERGY_CONSUMPTION', Unit__c = 'KWH_PER_15_MIN')
+        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'WATER_PUMP',
+                Measurement_Type__c = 'WATER_PRESSURE',
+                Unit__c = 'BAR',
+                Alert_Direction__c = 'Below',
+                Warning_Limit__c = 0.3,
+                Critical_Limit__c = 0.1
+            ),
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'ENERGY_METER',
+                Measurement_Type__c = 'ENERGY_CONSUMPTION',
+                Unit__c = 'KWH_PER_15_MIN',
+                Alert_Direction__c = 'Above',
+                Warning_Limit__c = 100,
+                Critical_Limit__c = 200
+            )
         };
+        MeasurementCatalog.testRecords = records;
+        MeasurementSeverityClassifier.testRecords = records;
     }
 
     private static Telemetry_Signal__e pressure(String key, Decimal value, Datetime occurredAt) {
@@ -75,7 +92,7 @@ private class TelemetryStateProcessingTest {
     private static Map<String, Signal_Log__c> logsByDelivery() {
         Map<String, Signal_Log__c> logs = new Map<String, Signal_Log__c>();
         for (Signal_Log__c log : [
-            SELECT Delivery_Id__c, Result__c, Reason__c, Error__c, Asset__r.External_Id__c
+            SELECT Delivery_Id__c, Result__c, Reason__c, Error__c, Severity__c, Asset__r.External_Id__c
             FROM Signal_Log__c
             WITH SYSTEM_MODE
         ]) {
@@ -107,7 +124,7 @@ private class TelemetryStateProcessingTest {
         Assert.areEqual(1.2, current.Measurement_Value__c, 'Quedó la lectura más reciente');
         Assert.areEqual(T2, current.Occurred_At__c);
         Assert.areEqual(PUMP, current.Asset__r.External_Id__c);
-        Assert.areEqual(SeverityClassifier.SEVERITY_NORMAL, current.Severity__c, 'Severidad del clasificador (placeholder)');
+        Assert.areEqual(MeasurementSeverityClassifier.SEVERITY_NORMAL, current.Severity__c, 'Severidad calculada por el clasificador (BR-206)');
 
         Map<String, Signal_Log__c> logs = logsByDelivery();
         Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, logs.get('dlv_p1').Result__c);
@@ -176,21 +193,33 @@ private class TelemetryStateProcessingTest {
 
     @IsTest
     static void lateCriticalDoesNotOverwriteNorOpenWork() {
-        useCatalog();
-        SeverityClassifier.forced = SeverityClassifier.SEVERITY_CRITICAL;
+        // Límites donde una presión baja es crítica (Below): <= 1.0 bar es Critical.
+        List<Measurement_Threshold__mdt> limits = new List<Measurement_Threshold__mdt>{
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'WATER_PUMP',
+                Measurement_Type__c = 'WATER_PRESSURE',
+                Unit__c = 'BAR',
+                Alert_Direction__c = 'Below',
+                Warning_Limit__c = 2.0,
+                Critical_Limit__c = 1.0
+            )
+        };
+        MeasurementCatalog.testRecords = limits;
+        MeasurementSeverityClassifier.testRecords = limits;
 
         Test.startTest();
-        deliver(new List<Telemetry_Signal__e>{ pressure('crit-new', 3.0, T2) });
-        deliver(new List<Telemetry_Signal__e>{ pressure('crit-old', 9.9, T1) });
+        deliver(new List<Telemetry_Signal__e>{ pressure('crit-new', 0.5, T2) });
+        deliver(new List<Telemetry_Signal__e>{ pressure('crit-old', 0.9, T1) });
         Test.stopTest();
 
         Asset_Condition__c current = conditionFor('WATER_PRESSURE');
-        Assert.areEqual(SeverityClassifier.SEVERITY_CRITICAL, current.Severity__c);
-        Assert.areEqual(3.0, current.Measurement_Value__c, 'La crítica atrasada no pisa la actual');
+        Assert.areEqual(MeasurementSeverityClassifier.SEVERITY_CRITICAL, current.Severity__c);
+        Assert.areEqual(0.5, current.Measurement_Value__c, 'La crítica atrasada no pisa la actual');
         Assert.areEqual(T2, current.Occurred_At__c);
 
         Map<String, Signal_Log__c> logs = logsByDelivery();
         Assert.areEqual(TelemetrySignalOutcome.RESULT_LATE, logs.get('dlv_crit-old').Result__c);
+        Assert.areEqual(MeasurementSeverityClassifier.SEVERITY_CRITICAL, logs.get('dlv_crit-old').Severity__c, 'La atrasada igual registró su severidad');
         Assert.areEqual(0, [SELECT COUNT() FROM WorkOrder WITH SYSTEM_MODE], 'Apex nunca abre Work Orders');
     }
 

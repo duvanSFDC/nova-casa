@@ -98,8 +98,14 @@ private class TelemetrySignalSeverityTest {
         Assert.areEqual('Warning', logs.get('dlv_warning').Severity__c);
         Assert.areEqual('Critical', logs.get('dlv_critical-limit').Severity__c, 'El límite exacto crítico ya es Critical.');
         Assert.areEqual('Critical', logs.get('dlv_critical').Severity__c);
+        // Con US-203, varias lecturas del mismo activo+tipo en el mismo instante dejan solo la
+        // primera como estado actual; las demás quedan Late, pero todas registran su severidad.
         for (String key : new List<String>{ 'dlv_normal', 'dlv_warning-limit', 'dlv_warning', 'dlv_critical-limit', 'dlv_critical' }) {
-            Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, logs.get(key).Result__c, key + ': ' + logs.get(key).Error__c);
+            Assert.isTrue(
+                logs.get(key).Result__c == TelemetrySignalOutcome.RESULT_ACCEPTED ||
+                    logs.get(key).Result__c == TelemetrySignalOutcome.RESULT_LATE,
+                key + ': ' + logs.get(key).Error__c
+            );
             Assert.areEqual(PUMP, logs.get(key).Asset__r.External_Id__c, key);
         }
         Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, logs.get('dlv_healthy').Result__c);
