@@ -6,6 +6,7 @@
 public inherited sharing class TelemetrySignalOutcome {
     public static final String RESULT_ACCEPTED = 'Accepted';
     public static final String RESULT_REJECTED = 'Rejected';
+    public static final String RESULT_LATE = 'Late';
 
     public static final String REASON_INCOMPLETE = 'INCOMPLETE';
     public static final String REASON_UNKNOWN_MESSAGE_TYPE = 'UNKNOWN_MESSAGE_TYPE';
@@ -46,6 +47,15 @@ public inherited sharing class TelemetrySignalOutcome {
      */
     public static TelemetrySignalOutcome rejected(String reason, String detail, Boolean retrySafe) {
         return new TelemetrySignalOutcome(RESULT_REJECTED, reason, detail, retrySafe);
+    }
+
+    /**
+     * La señal es válida pero no es más nueva que la lectura actual del activo (BR-203),
+     * así que no reemplaza el estado. Queda en el log como Atrasada, con el equipo y el
+     * edificio que ya se habían reconocido. No es un rechazo: no lleva motivo.
+     */
+    public static TelemetrySignalOutcome late(Id assetId, Id locationId, String detail) {
+        return new TelemetrySignalOutcome(RESULT_LATE, null, detail, false).withReferences(assetId, locationId);
     }
 
     public TelemetrySignalOutcome withReferences(Id assetId, Id locationId) {
