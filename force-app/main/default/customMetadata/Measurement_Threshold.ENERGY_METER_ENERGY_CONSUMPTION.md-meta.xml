@@ -3,6 +3,14 @@
     <label>Medidor de energía · Consumo</label>
     <protected>false</protected>
     <values>
+        <field>Alert_Direction__c</field>
+        <value xsi:type="xsd:string">Above</value>
+    </values>
+    <values>
+        <field>Critical_Limit__c</field>
+        <value xsi:type="xsd:double">60</value>
+    </values>
+    <values>
         <field>Asset_Type__c</field>
         <value xsi:type="xsd:string">ENERGY_METER</value>
     </values>
@@ -13,5 +21,9 @@
     <values>
         <field>Unit__c</field>
         <value xsi:type="xsd:string">KWH_PER_15_MIN</value>
+    </values>
+    <values>
+        <field>Warning_Limit__c</field>
+        <value xsi:type="xsd:double">40</value>
     </values>
 </CustomMetadata>

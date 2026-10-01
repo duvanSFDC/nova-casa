@@ -3,6 +3,14 @@
     <label>Cuarto técnico · Temperatura</label>
     <protected>false</protected>
     <values>
+        <field>Alert_Direction__c</field>
+        <value xsi:type="xsd:string">Above</value>
+    </values>
+    <values>
+        <field>Critical_Limit__c</field>
+        <value xsi:type="xsd:double">35</value>
+    </values>
+    <values>
         <field>Asset_Type__c</field>
         <value xsi:type="xsd:string">TECHNICAL_ROOM</value>
     </values>
@@ -13,5 +21,9 @@
     <values>
         <field>Unit__c</field>
         <value xsi:type="xsd:string">CELSIUS</value>
+    </values>
+    <values>
+        <field>Warning_Limit__c</field>
+        <value xsi:type="xsd:double">30</value>
     </values>
 </CustomMetadata>

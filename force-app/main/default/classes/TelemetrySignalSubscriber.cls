@@ -3,12 +3,15 @@
  * Apex A (TelemetrySignalValidator) aparta las señales incompletas y Apex B
  * (TelemetrySignalProcessor) reconoce el edificio y el equipo de las demás.
  * Cada señal deja su log en "Procesada" con su resultado y motivo, así que una
- * señal inválida no detiene a las otras. Clasificar y actualizar Condition viene
- * después (BR-203 a BR-206).
+ * señal inválida no detiene a las otras. Luego AssetConditionService mantiene la
+ * lectura más reciente por activo y tipo (BR-203). Clasificar la severidad real y
+ * diferenciar la respuesta viene después (BR-204 y BR-206).
  */
 public inherited sharing class TelemetrySignalSubscriber {
     public static void handle(List<Telemetry_Signal__e> events) {
         List<TelemetrySignalOutcome> outcomes = evaluate(events);
+        // Apex B parte 2: conserva lo más reciente por activo+tipo y marca Late lo atrasado.
+        AssetConditionService.updateCurrentState(events, outcomes);
         Map<String, Signal_Log__c> logsByUuid = existingLogs(events);
 
         Datetime processedAt = Datetime.now();

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Critical_Limit__c</fullName>
+    <description>Desde este valor la lectura es Crítico, en la dirección de Alert Direction. El valor exacto ya es Crítico. Tiene que estar más allá del límite de advertencia en esa dirección; si no, el rango es contradictorio. Vacío significa configuración incompleta, no Normal. Los números actuales son de ejemplo hasta que Emiliano defina los reales.</description>
+    <externalId>false</externalId>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Valor en la unidad de este registro desde el que la lectura es Crítico. El valor exacto cuenta como Crítico.</inlineHelpText>
+    <label>Critical Limit</label>
+    <precision>16</precision>
+    <required>false</required>
+    <scale>4</scale>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

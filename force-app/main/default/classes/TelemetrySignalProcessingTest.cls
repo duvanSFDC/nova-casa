@@ -36,15 +36,43 @@ private class TelemetrySignalProcessingTest {
         return new Asset(Name = name, External_Id__c = code, Asset_Type__c = type, LocationId = locationId, AccountId = accountId);
     }
 
-    /** Mismas unidades que la CMDT desplegada, para no depender de que alguien la edite. */
+    /** Mismas unidades y límites de ejemplo que la CMDT desplegada, para no depender de que alguien la edite. */
     private static void useCatalog() {
-        MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(Asset_Type__c = 'WATER_PUMP', Measurement_Type__c = 'WATER_PRESSURE', Unit__c = 'BAR'),
-            new Measurement_Threshold__mdt(Asset_Type__c = 'ENERGY_METER', Measurement_Type__c = 'ENERGY_CONSUMPTION', Unit__c = 'KWH_PER_15_MIN')
+        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'WATER_PUMP',
+                Measurement_Type__c = 'WATER_PRESSURE',
+                Unit__c = 'BAR',
+                Alert_Direction__c = 'Below',
+                Warning_Limit__c = 1.5,
+                Critical_Limit__c = 1.0
+            ),
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'ENERGY_METER',
+                Measurement_Type__c = 'ENERGY_CONSUMPTION',
+                Unit__c = 'KWH_PER_15_MIN',
+                Alert_Direction__c = 'Above',
+                Warning_Limit__c = 40,
+                Critical_Limit__c = 60
+            )
         };
+        MeasurementCatalog.testRecords = records;
+        MeasurementSeverityClassifier.testRecords = records;
     }
 
     private static Telemetry_Signal__e measurement(String key, String buildingCode, String assetCode, String type, Decimal value, String unit) {
+        return measurement(key, buildingCode, assetCode, type, value, unit, BASE_TIME);
+    }
+
+    private static Telemetry_Signal__e measurement(
+        String key,
+        String buildingCode,
+        String assetCode,
+        String type,
+        Decimal value,
+        String unit,
+        Datetime occurredAt
+    ) {
         return new Telemetry_Signal__e(
             Delivery_Id__c = 'dlv_' + key,
             Message_Id__c = 'msg_' + key,
@@ -56,11 +84,15 @@ private class TelemetrySignalProcessingTest {
             Measurement_Type__c = type,
             Measurement_Value__c = value,
             Measurement_Unit__c = unit,
-            Occurred_At__c = BASE_TIME
+            Occurred_At__c = occurredAt
         );
     }
 
     private static Telemetry_Signal__e connectivity(String key, String status) {
+        return connectivity(key, status, BASE_TIME);
+    }
+
+    private static Telemetry_Signal__e connectivity(String key, String status, Datetime occurredAt) {
         return new Telemetry_Signal__e(
             Delivery_Id__c = 'dlv_' + key,
             Message_Id__c = 'msg_' + key,
@@ -69,7 +101,7 @@ private class TelemetrySignalProcessingTest {
             Building_Id__c = BAQ,
             Asset_Id__c = CAMERA,
             Communication_Status__c = status,
-            Occurred_At__c = BASE_TIME
+            Occurred_At__c = occurredAt
         );
     }
 
@@ -100,6 +132,14 @@ private class TelemetrySignalProcessingTest {
         Assert.isNull(log.Error__c, log.Delivery_Id__c);
         Assert.areEqual(assetCode, log.Asset__r?.External_Id__c, log.Delivery_Id__c + ': enlaza el equipo');
         Assert.areEqual(buildingCode, log.Location__r?.External_Id__c, log.Delivery_Id__c + ': enlaza el edificio');
+    }
+
+    private static void assertLate(Signal_Log__c log, String assetCode, String buildingCode) {
+        Assert.areEqual(TelemetryPublisher.STATUS_PROCESSED, log.Status__c, log.Delivery_Id__c + ': atrasada también es procesada');
+        Assert.areEqual(TelemetrySignalOutcome.RESULT_LATE, log.Result__c, log.Delivery_Id__c);
+        Assert.isNull(log.Reason__c, log.Delivery_Id__c + ': Late no lleva motivo de rechazo');
+        Assert.areEqual(assetCode, log.Asset__r?.External_Id__c, log.Delivery_Id__c + ': conserva el equipo reconocido');
+        Assert.areEqual(buildingCode, log.Location__r?.External_Id__c, log.Delivery_Id__c + ': conserva el edificio reconocido');
     }
 
     private static void assertRejected(Signal_Log__c log, String reason, Boolean retrySafe, String detailFragment) {
@@ -140,9 +180,11 @@ private class TelemetrySignalProcessingTest {
 
         Assert.areEqual(15, logs.size(), 'Cada señal deja exactamente un log');
 
+        // Tres señales comparten activo+tipo (PUMP WATER_PRESSURE) con el mismo occurredAt:
+        // la primera queda como estado actual y las otras dos, al no ser más nuevas, quedan Late.
         assertAccepted(logs.get('dlv_pressure-1'), PUMP, BOG);
-        assertAccepted(logs.get('dlv_pressure-2'), PUMP, BOG);
-        assertAccepted(logs.get('dlv_lowercase-codes'), PUMP, BOG);
+        assertLate(logs.get('dlv_pressure-2'), PUMP, BOG);
+        assertLate(logs.get('dlv_lowercase-codes'), PUMP, BOG);
         assertAccepted(logs.get('dlv_energy'), ENERGY, BOG);
         assertAccepted(logs.get('dlv_camera-lost'), CAMERA, BAQ);
 
@@ -165,32 +207,44 @@ private class TelemetrySignalProcessingTest {
 
         Assert.areEqual(4, [SELECT COUNT() FROM Asset WITH SYSTEM_MODE], 'Las señales no crean equipos');
         Assert.areEqual(2, [SELECT COUNT() FROM Location WITH SYSTEM_MODE], 'Las señales no crean edificios');
+
+        // El estado actual queda con una fila por activo+tipo aceptado (presión, energía, conectividad).
+        Assert.areEqual(3, [SELECT COUNT() FROM Asset_Condition__c WITH SYSTEM_MODE], 'Una condición por activo+tipo aceptado');
+        Asset_Condition__c pressure = [
+            SELECT Measurement_Value__c, Measurement_Unit__c
+            FROM Asset_Condition__c
+            WHERE Measurement_Type__c = 'WATER_PRESSURE'
+            WITH SYSTEM_MODE
+        ];
+        Assert.areEqual(0.7, pressure.Measurement_Value__c, 'La condición conserva la primera lectura, no las empatadas');
     }
 
     @IsTest
-    static void volumeOf200ProducesTheExpectedCountPerResult() {
+    static void volumeOf200KeepsTheMostRecentPerAssetAndIsolatesInvalid() {
         useCatalog();
+        // occurredAt crece con i: dentro de cada activo+tipo, la de mayor i es la más reciente.
         List<Telemetry_Signal__e> events = new List<Telemetry_Signal__e>();
         for (Integer i = 0; i < 200; i++) {
             String key = 'vol-' + i;
+            Datetime occurredAt = BASE_TIME.addSeconds(i);
             switch on Math.mod(i, 5) {
                 when 0 {
-                    events.add(measurement(key, BOG, PUMP, 'WATER_PRESSURE', 0.5 + i / 100.0, 'BAR'));
+                    events.add(measurement(key, BOG, PUMP, 'WATER_PRESSURE', 0.5 + i / 100.0, 'BAR', occurredAt));
                 }
                 when 1 {
-                    events.add(measurement(key, BOG, ENERGY, 'ENERGY_CONSUMPTION', 10 + i, 'KWH_PER_15_MIN'));
+                    events.add(measurement(key, BOG, ENERGY, 'ENERGY_CONSUMPTION', 10 + i, 'KWH_PER_15_MIN', occurredAt));
                 }
                 when 2 {
-                    events.add(connectivity(key, Math.mod(i, 2) == 0 ? 'HEALTHY' : 'LOST'));
+                    events.add(connectivity(key, Math.mod(i, 2) == 0 ? 'HEALTHY' : 'LOST', occurredAt));
                 }
                 when 3 {
-                    events.add(measurement(key, BAQ, 'AST-UNKNOWN-' + i, 'WATER_PRESSURE', 0.7, 'BAR'));
+                    events.add(measurement(key, BAQ, 'AST-UNKNOWN-' + i, 'WATER_PRESSURE', 0.7, 'BAR', occurredAt));
                 }
                 when else {
                     events.add(
                         Math.mod(i, 10) == 4
-                            ? measurement(key, BOG, PUMP, 'WATER_PRESSURE', null, 'BAR')
-                            : measurement(key, BOG, ENERGY, 'ENERGY_CONSUMPTION', 900, 'WATT')
+                            ? measurement(key, BOG, PUMP, 'WATER_PRESSURE', null, 'BAR', occurredAt)
+                            : measurement(key, BOG, ENERGY, 'ENERGY_CONSUMPTION', 900, 'WATT', occurredAt)
                     );
                 }
             }
@@ -200,46 +254,60 @@ private class TelemetrySignalProcessingTest {
 
         Assert.areEqual(200, logs.size(), 'Una señal, un log');
         Map<String, Integer> countByOutcome = new Map<String, Integer>();
-        Map<String, Integer> acceptedByAsset = new Map<String, Integer>();
+        Map<String, Integer> validByAsset = new Map<String, Integer>();
         for (Signal_Log__c log : logs.values()) {
             Assert.areEqual(TelemetryPublisher.STATUS_PROCESSED, log.Status__c, log.Delivery_Id__c);
             Assert.isNotNull(log.Processed_At__c, log.Delivery_Id__c);
             String outcome = log.Result__c + (log.Reason__c == null ? '' : ':' + log.Reason__c);
             countByOutcome.put(outcome, (countByOutcome.containsKey(outcome) ? countByOutcome.get(outcome) : 0) + 1);
-            if (log.Result__c == TelemetrySignalOutcome.RESULT_ACCEPTED) {
+            if (log.Result__c == TelemetrySignalOutcome.RESULT_ACCEPTED || log.Result__c == TelemetrySignalOutcome.RESULT_LATE) {
                 String assetCode = log.Asset__r.External_Id__c;
-                acceptedByAsset.put(assetCode, (acceptedByAsset.containsKey(assetCode) ? acceptedByAsset.get(assetCode) : 0) + 1);
+                validByAsset.put(assetCode, (validByAsset.containsKey(assetCode) ? validByAsset.get(assetCode) : 0) + 1);
             }
         }
 
+        // 40 válidas por cada uno de los 3 activos: 1 queda como estado actual (la más reciente) y 39 Late.
         Assert.areEqual(
             new Map<String, Integer>{
-                'Accepted' => 120,
+                'Accepted' => 3,
+                'Late' => 117,
                 'Rejected:UNKNOWN_ASSET' => 40,
                 'Rejected:INCOMPLETE' => 20,
                 'Rejected:INCOMPATIBLE_UNIT' => 20
             },
             countByOutcome,
-            'Las válidas siguen aunque 80 del mismo lote sean inválidas'
+            'Las válidas sobreviven a las 80 inválidas; por activo queda solo la más reciente'
         );
         Assert.areEqual(
             new Map<String, Integer>{ PUMP => 40, ENERGY => 40, CAMERA => 40 },
-            acceptedByAsset,
-            'Varias señales del mismo equipo en un lote se enlazan todas a su equipo'
+            validByAsset,
+            'Las 40 señales de cada equipo quedan enlazadas a su equipo (aceptada o atrasada)'
         );
+
+        // El estado actual guarda, por activo+tipo, la lectura de mayor occurredAt del lote.
+        Map<String, Asset_Condition__c> conditionByType = new Map<String, Asset_Condition__c>();
+        for (Asset_Condition__c condition : [
+            SELECT Measurement_Type__c, Occurred_At__c
+            FROM Asset_Condition__c
+            WITH SYSTEM_MODE
+        ]) {
+            conditionByType.put(condition.Measurement_Type__c, condition);
+        }
+        Assert.areEqual(3, conditionByType.size(), 'Una condición por activo+tipo');
+        Assert.areEqual(BASE_TIME.addSeconds(195), conditionByType.get('WATER_PRESSURE').Occurred_At__c, 'Presión: la más reciente (i=195)');
+        Assert.areEqual(BASE_TIME.addSeconds(196), conditionByType.get('ENERGY_CONSUMPTION').Occurred_At__c, 'Energía: la más reciente (i=196)');
+        Assert.areEqual(BASE_TIME.addSeconds(197), conditionByType.get(AssetConditionService.CONNECTIVITY_TYPE).Occurred_At__c, 'Conectividad: la más reciente (i=197)');
     }
 
     @IsTest
     static void queriesAndWritesDoNotGrowWithTheBatch() {
         useCatalog();
+        // Un lote de 1 (presión) y uno de 200 (energía, occurredAt creciente). Usan activos distintos
+        // para no interferir entre sí; cada lote actualiza una condición.
         List<Telemetry_Signal__e> single = new List<Telemetry_Signal__e>{ measurement('single', BOG, PUMP, 'WATER_PRESSURE', 0.7, 'BAR') };
         List<Telemetry_Signal__e> full = new List<Telemetry_Signal__e>();
         for (Integer i = 0; i < 200; i++) {
-            full.add(
-                Math.mod(i, 2) == 0
-                    ? measurement('full-' + i, BOG, PUMP, 'WATER_PRESSURE', 0.7, 'BAR')
-                    : measurement('full-' + i, BAQ, 'AST-UNKNOWN-' + i, 'WATER_PRESSURE', 0.7, 'BAR')
-            );
+            full.add(measurement('full-' + i, BOG, ENERGY, 'ENERGY_CONSUMPTION', 10 + i, 'KWH_PER_15_MIN', BASE_TIME.addSeconds(i)));
         }
 
         Test.startTest();
@@ -247,12 +315,19 @@ private class TelemetrySignalProcessingTest {
         List<Integer> costOf200 = cost(full);
         Test.stopTest();
 
-        Assert.areEqual(new List<Integer>{ 3, 1 }, costOfOne, 'Logs, edificios y equipos: 3 consultas y 1 escritura');
+        // 4 consultas (logs, edificios, equipos, condiciones) y 2 escrituras (condiciones y logs).
+        Assert.areEqual(new List<Integer>{ 4, 2 }, costOfOne, 'Costo fijo por lote');
         Assert.areEqual(costOfOne, costOf200, 'El costo no crece con el tamaño del lote');
         Assert.areEqual(201, [SELECT COUNT() FROM Signal_Log__c WITH SYSTEM_MODE]);
+        // De las 200 de energía, solo la más reciente queda como estado actual; el resto, Late.
         Assert.areEqual(
-            100,
+            1,
             [SELECT COUNT() FROM Signal_Log__c WHERE Result__c = :TelemetrySignalOutcome.RESULT_ACCEPTED AND Delivery_Id__c LIKE 'dlv_full-%' WITH SYSTEM_MODE]
+        );
+        Assert.areEqual(
+            BASE_TIME.addSeconds(199),
+            [SELECT Occurred_At__c FROM Asset_Condition__c WHERE Measurement_Type__c = 'ENERGY_CONSUMPTION' WITH SYSTEM_MODE].Occurred_At__c,
+            'La condición de energía guarda la lectura más reciente del lote'
         );
     }
 
@@ -307,6 +382,15 @@ private class TelemetrySignalProcessingTest {
 
     @IsTest
     static void compatibilityComesFromTheCatalogNotFromTheCode() {
+        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+            new Measurement_Threshold__mdt(
+                Asset_Type__c = 'WATER_PUMP',
+                Measurement_Type__c = 'WATER_PRESSURE',
+                Alert_Direction__c = 'Below',
+                Warning_Limit__c = 1.5,
+                Critical_Limit__c = 1.0
+            )
+        };
         MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>();
         List<Telemetry_Signal__e> events = new List<Telemetry_Signal__e>{ measurement('no-catalog', BOG, PUMP, 'WATER_PRESSURE', 0.7, 'BAR') };
 

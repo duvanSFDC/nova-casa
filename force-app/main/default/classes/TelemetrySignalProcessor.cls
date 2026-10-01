@@ -1,6 +1,7 @@
 /**
  * Apex B, primera parte (BR-202): reconoce el edificio y el equipo de cada señal por su
  * código y revisa que la medición sea compatible con el tipo de equipo guardado en Salesforce.
+ * Una medición aceptada sale con su severidad según los límites vigentes (BR-204).
  * Hace una consulta de Location y una de Asset para todo el lote, sin importar cuántas señales traiga.
  * La señal nunca crea edificios ni equipos: un código que no existe se rechaza.
  * Corre como Automated Process, así que lee en modo sistema (ver README).
@@ -41,8 +42,9 @@ public inherited sharing class TelemetrySignalProcessor {
         }
 
         MeasurementCatalog catalog = MeasurementCatalog.load();
+        MeasurementSeverityClassifier classifier = MeasurementSeverityClassifier.load();
         for (Telemetry_Signal__e evt : events) {
-            outcomes.add(resolve(evt, locationIdByCode, assetByCode, catalog));
+            outcomes.add(resolve(evt, locationIdByCode, assetByCode, catalog, classifier));
         }
         return outcomes;
     }
@@ -51,7 +53,8 @@ public inherited sharing class TelemetrySignalProcessor {
         Telemetry_Signal__e evt,
         Map<String, Id> locationIdByCode,
         Map<String, Asset> assetByCode,
-        MeasurementCatalog catalog
+        MeasurementCatalog catalog,
+        MeasurementSeverityClassifier classifier
     ) {
         Id locationId = locationIdByCode.get(normalize(evt.Building_Id__c));
         Asset equipment = assetByCode.get(normalize(evt.Asset_Id__c));
@@ -94,6 +97,17 @@ public inherited sharing class TelemetrySignalProcessor {
             if (incompatible != null) {
                 return incompatible.withReferences(assetId, locationId);
             }
+            // BR-204: los límites vigentes al procesar; sin límites válidos no se supone Normal.
+            MeasurementSeverityClassifier.Classification classification = classifier.classify(
+                equipment.Asset_Type__c,
+                evt.Measurement_Type__c,
+                evt.Measurement_Value__c
+            );
+            if (!classification.isClassified()) {
+                return TelemetrySignalOutcome.rejected(classification.reason, classification.detail, true)
+                    .withReferences(assetId, locationId);
+            }
+            return TelemetrySignalOutcome.accepted(assetId, locationId).withSeverity(classification.severity);
         }
         return TelemetrySignalOutcome.accepted(assetId, locationId);
     }
