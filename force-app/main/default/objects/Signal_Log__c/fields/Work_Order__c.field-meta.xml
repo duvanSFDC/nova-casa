@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Work_Order__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
-    <description>Intervención relacionada con la señal, si existe. Es opcional: Apex no crea el Work Order, lo abre la operadora con un botón.</description>
+    <description>Intervención relacionada con la señal, si existe. El suscriptor crea una intervención por mensaje crítico vigente (US-205) y enlaza aquí tanto la señal original como sus reenvíos. Es opcional: una señal no crítica o rechazada no tiene intervención.</description>
     <label>Work Order</label>
     <referenceTo>WorkOrder</referenceTo>
     <relationshipLabel>Signal Logs</relationshipLabel>
