@@ -3,15 +3,20 @@
  * Apex A (TelemetrySignalValidator) aparta las señales incompletas y Apex B
  * (TelemetrySignalProcessor) reconoce el edificio y el equipo de las demás.
  * Cada señal deja su log en "Procesada" con su resultado y motivo, así que una
- * señal inválida no detiene a las otras. Luego AssetConditionService mantiene la
- * lectura más reciente por activo y tipo (BR-203). Clasificar la severidad real y
- * diferenciar la respuesta viene después (BR-204 y BR-206).
+ * señal inválida no detiene a las otras. El orden importa: primero se apartan los
+ * reenvíos y conflictos por identidad (BR-205), luego se conserva la lectura más
+ * reciente por activo y tipo (BR-203) y, por último, cada crítica vigente abre una
+ * sola intervención (BR-205). La severidad la calcula Apex B1 (BR-204/206).
  */
 public inherited sharing class TelemetrySignalSubscriber {
     public static void handle(List<Telemetry_Signal__e> events) {
         List<TelemetrySignalOutcome> outcomes = evaluate(events);
-        // Apex B parte 2: conserva lo más reciente por activo+tipo y marca Late lo atrasado.
+        // BR-205: reenvíos y conflictos por identidad, antes de tocar estado o crear intervenciones.
+        SignalIdentityService.classifyDuplicates(events, outcomes);
+        // Apex B parte 2 (BR-203): conserva lo más reciente por activo+tipo y marca Late lo atrasado.
         AssetConditionService.updateCurrentState(events, outcomes);
+        // BR-205: cada crítica vigente abre una sola intervención (reenvíos reutilizan).
+        InterventionService.ensureInterventions(events, outcomes);
         Map<String, Signal_Log__c> logsByUuid = existingLogs(events);
 
         Datetime processedAt = Datetime.now();

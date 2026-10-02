@@ -7,6 +7,7 @@ public inherited sharing class TelemetrySignalOutcome {
     public static final String RESULT_ACCEPTED = 'Accepted';
     public static final String RESULT_REJECTED = 'Rejected';
     public static final String RESULT_LATE = 'Late';
+    public static final String RESULT_DUPLICATE = 'Duplicate';
 
     public static final String REASON_INCOMPLETE = 'INCOMPLETE';
     public static final String REASON_UNKNOWN_MESSAGE_TYPE = 'UNKNOWN_MESSAGE_TYPE';
@@ -18,6 +19,8 @@ public inherited sharing class TelemetrySignalOutcome {
     public static final String REASON_THRESHOLD_MISSING = MeasurementSeverityClassifier.REASON_THRESHOLD_MISSING;
     public static final String REASON_THRESHOLD_INCOMPLETE = MeasurementSeverityClassifier.REASON_THRESHOLD_INCOMPLETE;
     public static final String REASON_THRESHOLD_CONTRADICTORY = MeasurementSeverityClassifier.REASON_THRESHOLD_CONTRADICTORY;
+    public static final String REASON_IDENTITY_CONFLICT = 'IDENTITY_CONFLICT';
+    public static final String REASON_INTERVENTION_FAILED = 'INTERVENTION_FAILED';
 
     private static final Integer DETAIL_MAX = 255;
 
@@ -29,6 +32,8 @@ public inherited sharing class TelemetrySignalOutcome {
     public Id locationId { get; private set; }
     /** Solo en mediciones aceptadas: Normal, Warning o Critical según los límites vigentes. */
     public String severity { get; private set; }
+    /** Intervención (Work Order) relacionada: la que creó una crítica o la que reutiliza un reenvío. */
+    public Id workOrderId { get; private set; }
 
     private TelemetrySignalOutcome(String result, String reason, String detail, Boolean retrySafe) {
         this.result = result;
@@ -58,6 +63,16 @@ public inherited sharing class TelemetrySignalOutcome {
         return new TelemetrySignalOutcome(RESULT_LATE, null, detail, false).withReferences(assetId, locationId);
     }
 
+    /**
+     * Un reenvío (mismo messageId, mismo contenido) de una señal ya procesada (BR-205): no crea
+     * otra intervención ni vuelve a tocar el estado; reutiliza y enlaza el resultado existente.
+     */
+    public static TelemetrySignalOutcome duplicate(Id assetId, Id locationId, Id workOrderId, String detail) {
+        return new TelemetrySignalOutcome(RESULT_DUPLICATE, null, detail, false)
+            .withReferences(assetId, locationId)
+            .withWorkOrder(workOrderId);
+    }
+
     public TelemetrySignalOutcome withReferences(Id assetId, Id locationId) {
         this.assetId = assetId;
         this.locationId = locationId;
@@ -66,6 +81,11 @@ public inherited sharing class TelemetrySignalOutcome {
 
     public TelemetrySignalOutcome withSeverity(String severity) {
         this.severity = severity;
+        return this;
+    }
+
+    public TelemetrySignalOutcome withWorkOrder(Id workOrderId) {
+        this.workOrderId = workOrderId;
         return this;
     }
 
@@ -78,5 +98,6 @@ public inherited sharing class TelemetrySignalOutcome {
         log.Asset__c = assetId;
         log.Location__c = locationId;
         log.Severity__c = severity;
+        log.Work_Order__c = workOrderId;
     }
 }

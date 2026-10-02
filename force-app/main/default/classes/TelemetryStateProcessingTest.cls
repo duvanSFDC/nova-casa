@@ -220,7 +220,8 @@ private class TelemetryStateProcessingTest {
         Map<String, Signal_Log__c> logs = logsByDelivery();
         Assert.areEqual(TelemetrySignalOutcome.RESULT_LATE, logs.get('dlv_crit-old').Result__c);
         Assert.areEqual(MeasurementSeverityClassifier.SEVERITY_CRITICAL, logs.get('dlv_crit-old').Severity__c, 'La atrasada igual registró su severidad');
-        Assert.areEqual(0, [SELECT COUNT() FROM WorkOrder WITH SYSTEM_MODE], 'Apex nunca abre Work Orders');
+        // US-205: la crítica vigente abre una intervención; la atrasada no agrega una segunda.
+        Assert.areEqual(1, [SELECT COUNT() FROM WorkOrder WITH SYSTEM_MODE], 'La atrasada no abre otra intervención');
     }
 
     @IsTest
@@ -290,7 +291,9 @@ private class TelemetryStateProcessingTest {
         Integer dml = Limits.getDmlStatements() - dmlBefore;
         Test.stopTest();
 
-        Assert.areEqual(4, queries, 'Logs, edificios, equipos y condiciones: una consulta cada uno');
+        // Logs, edificios, equipos, identidad (US-205) y condiciones: una consulta cada uno.
+        // Sin críticas no se abren intervenciones, así que no hay consulta ni insert de Work Order.
+        Assert.areEqual(5, queries, 'Una consulta por paso del lote, no por señal');
         Assert.areEqual(2, dml, 'Un upsert de condiciones y uno de logs');
         Asset_Condition__c current = conditionFor('WATER_PRESSURE');
         Assert.areEqual(T1.addSeconds(199), current.Occurred_At__c, 'Queda la más reciente de las 200');

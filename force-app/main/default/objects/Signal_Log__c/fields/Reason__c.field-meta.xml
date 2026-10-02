@@ -61,6 +61,16 @@
                 <default>false</default>
                 <label>Límites contradictorios</label>
             </value>
+            <value>
+                <fullName>IDENTITY_CONFLICT</fullName>
+                <default>false</default>
+                <label>Conflicto de identidad</label>
+            </value>
+            <value>
+                <fullName>INTERVENTION_FAILED</fullName>
+                <default>false</default>
+                <label>No se pudo crear la intervención</label>
+            </value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
