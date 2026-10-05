@@ -2,10 +2,14 @@
  * Lista que consulta Laura. Una fila por lectura vigente y, si el equipo no ha
  * reportado, una fila sin lectura. La intervención abierta es el Work Order
  * más antiguo del mismo activo con IsClosed en falso.
+ * El estado del activo es la peor severidad entre todas sus lecturas vigentes
+ * (Critical > Warning > Normal), aunque se filtre por severidad. La lista va
+ * primero por ese estado y al final los activos sin lectura (BR-206).
  * Corre con los permisos de quien pregunta (BR-208).
  */
 public with sharing class OperatorStatusService {
     public static final Set<String> SEVERITIES = new Set<String>{ 'Normal', 'Warning', 'Critical' };
+    private static final List<String> SEVERITY_ORDER = new List<String>{ 'Critical', 'Warning', 'Normal' };
 
     public class Row {
         @AuraEnabled public String rowKey;
@@ -18,7 +22,9 @@ public with sharing class OperatorStatusService {
         @AuraEnabled public String measurementType;
         @AuraEnabled public Decimal measurementValue;
         @AuraEnabled public String measurementUnit;
+        @AuraEnabled public String communicationStatus;
         @AuraEnabled public String severity;
+        @AuraEnabled public String assetSeverity;
         @AuraEnabled public Datetime occurredAt;
         @AuraEnabled public Id workOrderId;
         @AuraEnabled public String workOrderNumber;
@@ -79,27 +85,61 @@ public with sharing class OperatorStatusService {
         Map<Id, List<Asset_Condition__c>> conditionsByAsset;
         Map<Id, WorkOrder> openWorkOrderByAsset;
         try {
-            conditionsByAsset = queryConditions(assetsById.keySet(), severity);
+            conditionsByAsset = queryConditions(assetsById.keySet());
             openWorkOrderByAsset = queryOpenWorkOrders(assetsById.keySet());
         } catch (QueryException error) {
             throw handled('No pudimos consultar los equipos.');
         }
 
-        List<Row> rows = new List<Row>();
+        Map<String, List<Row>> rowsByAssetSeverity = new Map<String, List<Row>>();
+        List<Row> withoutSummary = new List<Row>();
         for (Asset asset : assets) {
             List<Asset_Condition__c> conditions = conditionsByAsset.get(asset.Id);
             WorkOrder openOrder = openWorkOrderByAsset.get(asset.Id);
             if (conditions == null || conditions.isEmpty()) {
                 if (severity == null) {
-                    rows.add(withoutReading(asset, openOrder));
+                    withoutSummary.add(withoutReading(asset, openOrder));
                 }
                 continue;
             }
+            String assetSeverity = worstSeverity(conditions);
             for (Asset_Condition__c condition : conditions) {
-                rows.add(fromCondition(asset, condition, openOrder));
+                if (severity != null && condition.Severity__c != severity) {
+                    continue;
+                }
+                Row row = fromCondition(asset, condition, openOrder);
+                row.assetSeverity = assetSeverity;
+                if (assetSeverity == null) {
+                    withoutSummary.add(row);
+                    continue;
+                }
+                if (!rowsByAssetSeverity.containsKey(assetSeverity)) {
+                    rowsByAssetSeverity.put(assetSeverity, new List<Row>());
+                }
+                rowsByAssetSeverity.get(assetSeverity).add(row);
             }
         }
+
+        List<Row> rows = new List<Row>();
+        for (String level : SEVERITY_ORDER) {
+            if (rowsByAssetSeverity.containsKey(level)) {
+                rows.addAll(rowsByAssetSeverity.get(level));
+            }
+        }
+        rows.addAll(withoutSummary);
         return rows;
+    }
+
+    @TestVisible
+    private static String worstSeverity(List<Asset_Condition__c> conditions) {
+        Integer worst = SEVERITY_ORDER.size();
+        for (Asset_Condition__c condition : conditions) {
+            Integer rank = SEVERITY_ORDER.indexOf(condition.Severity__c);
+            if (rank >= 0 && rank < worst) {
+                worst = rank;
+            }
+        }
+        return worst < SEVERITY_ORDER.size() ? SEVERITY_ORDER[worst] : null;
     }
 
     private static List<Asset> queryAssets(Id buildingId) {
@@ -120,27 +160,15 @@ public with sharing class OperatorStatusService {
         ];
     }
 
-    private static Map<Id, List<Asset_Condition__c>> queryConditions(Set<Id> assetIds, String severity) {
-        List<Asset_Condition__c> conditions;
-        if (severity == null) {
-            conditions = [
-                SELECT Id, Asset__c, Measurement_Type__c, Measurement_Value__c,
-                    Measurement_Unit__c, Severity__c, Occurred_At__c
-                FROM Asset_Condition__c
-                WHERE Asset__c IN :assetIds
-                WITH USER_MODE
-                ORDER BY Measurement_Type__c
-            ];
-        } else {
-            conditions = [
-                SELECT Id, Asset__c, Measurement_Type__c, Measurement_Value__c,
-                    Measurement_Unit__c, Severity__c, Occurred_At__c
-                FROM Asset_Condition__c
-                WHERE Asset__c IN :assetIds AND Severity__c = :severity
-                WITH USER_MODE
-                ORDER BY Measurement_Type__c
-            ];
-        }
+    private static Map<Id, List<Asset_Condition__c>> queryConditions(Set<Id> assetIds) {
+        List<Asset_Condition__c> conditions = [
+            SELECT Id, Asset__c, Measurement_Type__c, Measurement_Value__c,
+                Measurement_Unit__c, Communication_Status__c, Severity__c, Occurred_At__c
+            FROM Asset_Condition__c
+            WHERE Asset__c IN :assetIds
+            WITH USER_MODE
+            ORDER BY Measurement_Type__c
+        ];
 
         Map<Id, List<Asset_Condition__c>> byAsset = new Map<Id, List<Asset_Condition__c>>();
         for (Asset_Condition__c condition : conditions) {
@@ -176,6 +204,7 @@ public with sharing class OperatorStatusService {
         row.measurementType = condition.Measurement_Type__c;
         row.measurementValue = condition.Measurement_Value__c;
         row.measurementUnit = condition.Measurement_Unit__c;
+        row.communicationStatus = condition.Communication_Status__c;
         row.severity = condition.Severity__c;
         row.occurredAt = condition.Occurred_At__c;
         return row;

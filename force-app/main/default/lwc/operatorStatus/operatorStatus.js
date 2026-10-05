@@ -2,6 +2,7 @@ import { LightningElement } from 'lwc';
 import TIME_ZONE from '@salesforce/i18n/timeZone';
 import getAssets from '@salesforce/apex/OperatorStatusService.getAssets';
 import getBuildings from '@salesforce/apex/OperatorStatusService.getBuildings';
+import { CONNECTIVITY, communicationLabel, severityCell, typeLabel, unitLabel } from './labels';
 
 const COLUMNS = [
     {
@@ -15,8 +16,25 @@ const COLUMNS = [
         }
     },
     { label: 'Edificio', fieldName: 'buildingName' },
+    {
+        label: 'Estado del activo',
+        fieldName: 'assetSeverityLabel',
+        cellAttributes: {
+            iconName: { fieldName: 'assetSeverityIcon' },
+            iconAlternativeText: { fieldName: 'assetSeverityLabel' },
+            class: { fieldName: 'assetSeverityClass' }
+        }
+    },
     { label: 'Lectura', fieldName: 'readingLabel' },
-    { label: 'Severidad', fieldName: 'severityLabel' },
+    {
+        label: 'Severidad',
+        fieldName: 'severityLabel',
+        cellAttributes: {
+            iconName: { fieldName: 'severityIcon' },
+            iconAlternativeText: { fieldName: 'severityLabel' },
+            class: { fieldName: 'severityClass' }
+        }
+    },
     { label: 'Hora de origen', fieldName: 'occurredAtLabel' },
     {
         label: 'Intervención',
@@ -28,17 +46,6 @@ const COLUMNS = [
         }
     }
 ];
-
-const SEVERITY_LABELS = {
-    Normal: 'Normal',
-    Warning: 'Advertencia',
-    Critical: 'Crítico'
-};
-
-const TYPE_LABELS = {
-    pressure: 'presión',
-    temperature: 'temperatura'
-};
 
 const SEVERITY_OPTIONS = [
     { label: 'Todas', value: '' },
@@ -156,12 +163,16 @@ export default class OperatorStatus extends LightningElement {
     }
 }
 
-function toTableRow(row) {
+export function toTableRow(row) {
+    const assetSeverity = severityCell(row.assetSeverity);
     const base = {
         rowKey: row.rowKey,
         assetName: row.assetName,
         assetUrl: recordUrl('Asset', row.assetId),
         buildingName: row.buildingName || '—',
+        assetSeverityLabel: assetSeverity.label,
+        assetSeverityIcon: assetSeverity.icon,
+        assetSeverityClass: assetSeverity.cellClass,
         workOrderUrl: row.workOrderId ? recordUrl('WorkOrder', row.workOrderId) : undefined,
         workOrderLabel: row.workOrderNumber || '—'
     };
@@ -173,13 +184,23 @@ function toTableRow(row) {
             occurredAtLabel: '—'
         };
     }
-    const typeLabel = TYPE_LABELS[row.measurementType] || row.measurementType;
+    const severity = severityCell(row.severity);
     return {
         ...base,
-        readingLabel: `${formatValue(row.measurementValue)} ${row.measurementUnit} · ${typeLabel}`,
-        severityLabel: SEVERITY_LABELS[row.severity] || row.severity,
+        readingLabel: readingLabel(row),
+        severityLabel: severity.label,
+        severityIcon: severity.icon,
+        severityClass: severity.cellClass,
         occurredAtLabel: formatWhen(row.occurredAt)
     };
+}
+
+function readingLabel(row) {
+    if (row.measurementType === CONNECTIVITY) {
+        return `Conexión: ${communicationLabel(row.communicationStatus)}`;
+    }
+    const unit = row.measurementUnit ? ` ${unitLabel(row.measurementUnit)}` : '';
+    return `${formatValue(row.measurementValue)}${unit} · ${typeLabel(row.measurementType)}`;
 }
 
 function recordUrl(objectApiName, recordId) {

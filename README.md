@@ -37,6 +37,7 @@ Cada log guarda cuatro horas por separado:
 - `objects/Asset_Condition__c`: el estado actual, una fila por activo y tipo de medición (`Asset_Measurement_Key__c = AssetId:tipo`). Es lo que lee la pantalla de Laura.
 - `objects/Measurement_Threshold__mdt` y sus registros en `customMetadata/`: qué unidad acepta cada tipo de equipo y medición. Se editan sin redesplegar (BR-204).
 - `platformEventSubscriberConfigs/TelemetrySignalTriggerConfig`: hace que el suscriptor reciba hasta 200 eventos por invocación.
+- `classes/OperatorStatusService` y `lwc/operatorStatus`: la pantalla *Estado operativo* de Laura (lecturas vigentes, estado del activo e intervención abierta). `permissionsets/Nova_Operator`: el acceso de Laura a esa pantalla.
 - `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta. `permissionsets/Nova_Admin`: acceso de solo lectura a la traza para Camila.
 
 ## Antes de empezar
@@ -55,6 +56,9 @@ sf project deploy start --source-dir force-app --target-org novacasa \
   --tests TelemetryStateProcessingTest --tests MeasurementSeverityClassifierTest \
   --tests TelemetrySignalSeverityTest --tests InterventionProcessingTest \
   --tests OperatorStatusServiceTest
+
+# 1b. Pruebas de la pantalla (Jest)
+npm install && npm run test:unit
 
 # 2. Dar acceso a quien ejecuta (tu usuario y el de integración)
 sf org assign permset --name Nova_Integration --target-org novacasa
@@ -108,6 +112,20 @@ El camino crítico → intervención se prueba de forma determinista con `Interv
 
 En una corrida real de **200 señales** el flujo integrado quedó así: **15 Accepted, 8 Duplicate, 175 Late y 2 Rejected**. Los 8 duplicados muestran la deduplicación por identidad funcionando en vivo (el simulador reenvía mensajes). En ese lote no llegó ninguna crítica (las presiones reales estuvieron sobre el umbral), así que no se abrieron intervenciones; la clasificación crítica depende de los umbrales reales que entregará Emiliano.
 
+## Evidencia US-206 (5 de octubre de 2026)
+
+Se publicaron al bus 11 señales de prueba (`Source = us-206-evidence`, `Delivery_Id` `dlv_us206_*`) contra los límites de ejemplo de la CMDT. Las 11 quedaron **Processed / Accepted** con esta severidad:
+
+| Señal | Activo | Valor | Límites (dirección) | Severidad | Work Order |
+| --- | --- | --- | --- | --- | --- |
+| Representativa | Bomba principal de agua | 3.2 bar | 1.5 / 1.0 (Below) | Normal | — |
+| Representativa | Ventilación | 32 °C | 30 / 35 (Above) | Warning | — |
+| Representativa | Medidor de energía Bogotá | 65 kWh/15 min | 40 / 60 (Above) | Critical | 00000144 |
+| Límite | Medidor de agua Bogotá | 599.9 · 600 · 999.9 · 1000 L/15 min | 600 / 1000 (Above) | Normal · Warning · Warning · Critical | solo 1000 → 00000145 |
+| Límite | Bomba de agua Caribe | 1.6 · 1.5 · 1.1 · 1.0 bar | 1.5 / 1.0 (Below) | Normal · Warning · Warning · Critical | solo 1.0 → 00000146 |
+
+Solo las críticas abrieron intervención (por el camino de US-205); normal y advertencia solo actualizaron la lectura. En la pantalla *Estado operativo* los tres activos críticos quedaron arriba con *Crítico* en rojo y su Work Order, luego las advertencias y al final los normales y el activo sin lectura. Las pruebas `OperatorStatusServiceTest` (estado del activo, filtro y conectividad) y las de Jest de `operatorStatus` cubren lo mismo de forma determinista; los límites exactos ya los cubre `MeasurementSeverityClassifierTest`.
+
 ## Decisiones
 
 - **Validar y resolver en la misma transacción, con guardado parcial.** El suscriptor corre Apex A y Apex B sobre todo el lote y guarda con `Database.upsert(logs, false, ...)`. Así una señal inválida no tumba a las válidas (BR-202). No se relanza el lote con `RetryableException`, porque un error de datos fallaría igual en cada reintento y el trigger terminaría suspendido.
@@ -119,7 +137,8 @@ En una corrida real de **200 señales** el flujo integrado quedó así: **15 Acc
 - **El suscriptor abre la intervención por mensaje crítico (BR-205).** *Reversión documentada:* el diseño inicial dejaba que Laura abriera el Work Order con un botón; con US-205 lo abre el suscriptor automáticamente ante una crítica vigente (se avisó a Emiliano). La deduplicación es por identidad del mensaje: `WorkOrder.Message_Key__c = messageId`. Un reenvío (misma identidad, mismo contenido) reutiliza la intervención y la enlaza; una misma identidad con contenido distinto es un **conflicto** (`IDENTITY_CONFLICT`), no un aviso nuevo. Javier sigue siendo el único que avanza y cierra el Work Order.
 - **Garantía frente a duplicados y concurrencia.** La unicidad de `Message_Key__c` es el candado: aunque el bus entregue en paralelo, no puede haber dos intervenciones para el mismo `messageId`; un choque concurrente (`DUPLICATE_VALUE`) se reconsulta y se reutiliza. Si la creación falla por otra razón, la señal **no** queda procesada satisfactoriamente: su log pasa a `Rejected`/`INTERVENTION_FAILED` con `Retry_Safe = true`. *Límite:* consolidar varias claves distintas del mismo activo en un único incidente es un extra fuera del alcance base.
 - **La severidad la calcula `MeasurementSeverityClassifier` (BR-204/BR-206).** El procesador compara la lectura con los límites de `Measurement_Threshold__mdt` (aviso, crítico y dirección) y la severidad viaja en `TelemetrySignalOutcome.severity`; US-203 solo la guarda en `Asset_Condition__c`. Los valores de los límites son de ejemplo hasta que Emiliano entregue los reales; sin límites válidos la señal se rechaza con un motivo (`THRESHOLD_*`), nunca se asume `Normal`. La conectividad no es una medición: su fila queda en `Normal`.
-- **El estado guarda el tipo de medición tal como llega del simulador.** La fila usa `WATER_PRESSURE`, `TEMPERATURE`, etc. (y `CONNECTIVITY` para la conectividad). *Pendiente de coordinación con US-207:* el LWC de Laura hoy mapea etiquetas en minúscula (`pressure`, `temperature`) y no dibuja la fila de conectividad; eso se ajusta en esa historia.
+- **El estado del activo es su peor lectura vigente (BR-206).** Un activo con varias mediciones se resume con la severidad más alta entre sus filas de `Asset_Condition__c` (Crítico > Advertencia > Normal). `OperatorStatusService` la calcula al consultar (no hay rollup guardado) y la devuelve en cada fila como `assetSeverity`, aunque Laura filtre por severidad. La lista va primero por ese estado y al final los activos sin lectura. La conectividad cuenta como `Normal`: una conexión perdida se muestra (*Conexión: Perdida*) pero no sube el estado; subirlo sería otra historia. La pantalla solo muestra la severidad guardada, nunca la recalcula.
+- **El estado guarda el tipo de medición tal como llega del simulador.** La fila usa `WATER_PRESSURE`, `TEMPERATURE`, etc. (y `CONNECTIVITY` para la conectividad). La pantalla de Laura los traduce (*presión de agua*, *temperatura*, *consumo de agua*, *consumo de energía*, *conectividad*) junto con sus unidades; un código que no conoce lo muestra tal cual. Cada severidad se ve con icono y texto, no solo con color.
 - **La ingesta corre en modo sistema.** Desde la API 67, Apex consulta en modo usuario por defecto. El suscriptor corre como *Automated Process*, así que el estado y los logs se leen y escriben con `SYSTEM_MODE` explícito. La seguridad por usuario (BR-208) se aplica en lo que consultan Laura, Javier y Camila.
 - **Una sola sesión del simulador.** Cada `POST /session` es un escenario nuevo, así que solo se abre cuando no hay cursor o cuando la sesión vence (dura 30 días).
 - **Ritmo de consulta.** El simulador sugiere esperar 10 segundos entre lotes, pero un Queueable no puede esperar menos de 1 minuto. Por eso el job se vuelve a encolar cada minuto.

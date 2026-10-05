@@ -5,6 +5,11 @@
         <enabled>true</enabled>
     </classAccesses>
     <description>Read the operator screen: assets, buildings, the current condition, and the open work order.</description>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Asset_Condition__c.Communication_Status__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <hasActivationRequired>false</hasActivationRequired>
     <label>Nova Operator</label>
     <objectPermissions>
