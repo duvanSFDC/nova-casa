@@ -205,7 +205,7 @@ Se crearon cuatro usuarios de prueba con el perfil *Minimum Access - Salesforce*
 | Usuario | Permisos | Pantalla *Estado operativo* | Apex directo |
 | --- | --- | --- | --- |
 | `opbog.us208` · Laura Alameda | `Nova_Operator`, grupo Nova Alameda | 5 equipos, todos de Nova Alameda | `getBuildings` solo devuelve Alameda; `getAssets(Nova Mirador)` → 0 filas |
-| `opmde.us208` · Laura Mirador | `Nova_Operator`, grupo Nova Mirador | 1 equipo (Bomba de agua, Nova Mirador) | `getAssets(Nova Alameda)` → 0 filas |
+| `opmde.us208` · Pedro Mirador | `Nova_Operator`, grupo Nova Mirador | 1 equipo (Bomba de agua, Nova Mirador) | `getAssets(Nova Alameda)` → 0 filas |
 | `coord.us208` · Javier | `Nova_Coordinator`, grupo `Nova_Coordination` | 11 equipos de los tres edificios, con sus intervenciones | Los tres edificios |
 | `noacc.us208` · Sin acceso | Ninguno | La pestaña no existe | Error: *No tiene acceso a la clase de Apex denominada 'OperatorStatusService'* |
 
