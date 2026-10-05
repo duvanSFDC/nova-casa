@@ -120,6 +120,10 @@
         <tab>Estado_Operativo</tab>
         <visibility>Visible</visibility>
     </tabSettings>
+    <tabSettings>
+        <tab>standard-WorkOrder</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <userPermissions>
         <enabled>true</enabled>
         <name>FieldServiceAccess</name>
