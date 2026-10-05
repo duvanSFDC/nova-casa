@@ -174,6 +174,8 @@ Se crearon cuatro usuarios de prueba con el perfil *Minimum Access - Salesforce*
 | `coord.us208` · Javier | `Nova_Coordinator`, grupo `Nova_Coordination` | 11 equipos de los tres edificios, con sus intervenciones | Los tres edificios |
 | `noacc.us208` · Sin acceso | Ninguno | La pestaña no existe | Error: *No tiene acceso a la clase de Apex denominada 'OperatorStatusService'* |
 
+Las capturas de cada usuario están en `docs/evidencia-us208/`: [operadora de Alameda](docs/evidencia-us208/operadora-alameda.png), [operador de Mirador](docs/evidencia-us208/operador-mirador.png), [coordinador](docs/evidencia-us208/coordinador.png) y [sin acceso](docs/evidencia-us208/sin-acceso.png).
+
 Sobre los mismos usuarios, `UserRecordAccess` confirmó que la operadora de Alameda lee sus 3 intervenciones sin poder editarlas y que el coordinador sí puede editar las 4. Una señal crítica procesada después de los cambios abrió el Work Order 00000184 con su `Building_Code__c = BLD-BOG-001`.
 
 `OperatorAccessTest` cubre lo mismo de forma determinista con usuarios distintos: cada operadora solo ve su edificio, pedir otro por Apex no devuelve nada, la operadora no puede cambiar lecturas ni intervenciones, un campo sin permiso (`Sensor_Id__c`) se rechaza aunque el registro sea visible, solo la administradora lee los errores técnicos, el coordinador ve todo y avanza intervenciones, y un usuario sin permisos recibe el error. `BuildingCodeFlowTest` comprueba que los tres flujos copian el código del edificio.
