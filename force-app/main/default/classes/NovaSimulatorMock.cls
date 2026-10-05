@@ -8,6 +8,7 @@ public class NovaSimulatorMock implements HttpCalloutMock {
     public String lastCursor;
     public String lastSessionBody;
     public Integer telemetryStatus = 200;
+    public Integer healthStatus = 200;
 
     public HttpResponse respond(HttpRequest req) {
         HttpResponse res = new HttpResponse();
@@ -19,6 +20,12 @@ public class NovaSimulatorMock implements HttpCalloutMock {
             lastSessionBody = req.getBody();
             res.setStatusCode(201);
             res.setBody(sessionBody());
+        } else if (endpoint.endsWith('/health')) {
+            res.setStatusCode(healthStatus);
+            res.setBody('{"status":"ok"}');
+        } else if (endpoint.endsWith('/catalog')) {
+            res.setStatusCode(200);
+            res.setBody(catalogBody());
         } else if (endpoint.contains('/telemetry')) {
             telemetryCalls++;
             lastCursor = req.getHeader(NovaSimulatorClient.CURSOR_HEADER);
@@ -80,6 +87,29 @@ public class NovaSimulatorMock implements HttpCalloutMock {
                     }
                 },
                 'pagination' => new Map<String, Object>{ 'nextCursor' => NEXT_CURSOR, 'hasMore' => true, 'pollAfterMs' => 10000 }
+            }
+        );
+    }
+
+    private static String catalogBody() {
+        return JSON.serialize(
+            new Map<String, Object>{
+                'contractVersion' => '1',
+                'scenarios' => new List<String>{
+                    'MIXED', 'QA_200', 'BOUNDARIES', 'CRITICAL_BURST', 'LATE_MESSAGES',
+                    'DUPLICATES', 'CONFLICT', 'INVALID_DATA', 'CAMERA_OUTAGE'
+                },
+                'catalog' => new Map<String, Object>{
+                    'buildings' => new List<Object>{
+                        new Map<String, Object>{ 'id' => 'BLD-BOG-001', 'name' => 'Edificio Nova Alameda', 'city' => 'Bogotá' },
+                        new Map<String, Object>{ 'id' => 'BLD-BAQ-001', 'name' => 'Edificio Nova Caribe', 'city' => 'Barranquilla' }
+                    }
+                },
+                'thresholdsReference' => new Map<String, Object>{
+                    'measurements' => new Map<String, Object>{
+                        'WATER_PRESSURE' => new Map<String, Object>{ 'unit' => 'BAR', 'normal' => new Map<String, Object>{ 'min' => 2.5, 'max' => 4 } }
+                    }
+                }
             }
         );
     }

@@ -165,6 +165,48 @@ private class TelemetryIngestionServiceTest {
     }
 
     @IsTest
+    static void isHealthyReportsServiceStatus() {
+        NovaSimulatorMock mock = new NovaSimulatorMock();
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        Boolean up = new NovaSimulatorClient().isHealthy();
+        mock.healthStatus = 503;
+        Boolean down = new NovaSimulatorClient().isHealthy();
+        Test.stopTest();
+
+        Assert.isTrue(up, '200 en /health es disponible');
+        Assert.isFalse(down, 'Un 503 no lanza; reporta no disponible');
+    }
+
+    @IsTest
+    static void fetchCatalogReturnsBuildingsAndScenarios() {
+        Test.setMock(HttpCalloutMock.class, new NovaSimulatorMock());
+
+        Test.startTest();
+        Map<String, Object> catalog = new NovaSimulatorClient().fetchCatalog();
+        Test.stopTest();
+
+        Assert.isTrue(((List<Object>) catalog.get('scenarios')).contains('MIXED'), 'Trae los escenarios');
+        Map<String, Object> catalogSection = (Map<String, Object>) catalog.get('catalog');
+        Assert.areEqual(2, ((List<Object>) catalogSection.get('buildings')).size(), 'Trae los dos edificios');
+        Assert.isNotNull(catalog.get('thresholdsReference'), 'Trae los umbrales de referencia');
+    }
+
+    @IsTest
+    static void schedulableEnqueuesIngestion() {
+        Test.setMock(HttpCalloutMock.class, new NovaSimulatorMock());
+
+        Assert.isNotNull(new TelemetryIngestionSchedulable(), 'El constructor por defecto usa el lote máximo');
+
+        Test.startTest();
+        new TelemetryIngestionSchedulable(5, 1).execute(null);
+        Test.stopTest();
+
+        Assert.areEqual(2, [SELECT COUNT() FROM Signal_Log__c WITH SYSTEM_MODE], 'El schedulable encola la ingesta');
+    }
+
+    @IsTest
     static void queueableRunsIngestion() {
         Test.setMock(HttpCalloutMock.class, new NovaSimulatorMock());
 
