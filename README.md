@@ -120,6 +120,30 @@ sf apex run --file scripts/apex/ingest-scenario.apex --target-org novacasa
 
 Por ejemplo: `CRITICAL_BURST` para ver intervenciones (US-205), `DUPLICATES` para la deduplicación, `LATE_MESSAGES` para la recencia (US-203) y `BOUNDARIES` para la severidad en los límites (US-206). La severidad se calcula en la org con `Measurement_Threshold__mdt`, así que las bandas dependen de esos umbrales.
 
+### Salud y catálogo del simulador
+
+- `NovaSimulatorClient.isHealthy()` consulta `/health` (devuelve `true` si el servicio responde, sin lanzar).
+- `NovaSimulatorClient.fetchCatalog()` consulta `/catalog`: edificios, activos, sensores, escenarios y los **umbrales de referencia**. Sirve para contrastar los datos semilla y los límites:
+
+```bash
+sf apex run --file scripts/apex/check-catalog.apex --target-org novacasa
+```
+
+Los datos semilla (edificios y activos) coinciden con el `/catalog`. **Pendiente de alineación:** los umbrales de referencia del `/catalog` son **rangos por bandas de dos lados** (p. ej. `WATER_PRESSURE` normal 2.5–4, aviso 1.5–2.49 y 4.01–5, crítico <1.49 y >5.01), mientras que `Measurement_Threshold__mdt` hoy modela **una sola dirección** (Above/Below + un límite). Alinear la severidad "de verdad" requiere que el clasificador (US-206) soporte bandas de dos lados; es una decisión de diseño del equipo, no un simple cambio de valores.
+
+### Ingesta automática (Scheduler)
+
+`TelemetryIngestionSchedulable` dispara la ingesta por horario; encola el Queueable `TelemetryIngestionJob` (un Schedulable no puede hacer callouts directos):
+
+```bash
+# Programa (edita el CRON dentro del script); para detener: Setup > Scheduled Jobs.
+sf apex run --file scripts/apex/schedule-ingest.apex --target-org novacasa
+```
+
+### Nota: validación de unidad
+
+Aunque la API no exige nada con la unidad, la solución **sí** valida que la unidad coincida con la del tipo de medición (`INCOMPATIBLE_UNIT`). Es una decisión deliberada, alineada con el acuerdo de Discovery de "una unidad compatible por tipo de medición".
+
 ## Evidencia (28 de septiembre de 2026)
 
 Con una corrida real se recibieron 20 señales, se publicaron 20 y las 20 terminaron en Processed. Por ejemplo, este es el recorrido de una clave:

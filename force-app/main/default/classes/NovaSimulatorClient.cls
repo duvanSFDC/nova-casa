@@ -83,6 +83,28 @@ public inherited sharing class NovaSimulatorClient {
         return page;
     }
 
+    /** /health: confirma que el simulador responde. No lanza; devuelve false si no está disponible. */
+    public Boolean isHealthy() {
+        HttpRequest req = new HttpRequest();
+        req.setEndpoint(NAMED_CREDENTIAL + '/health');
+        req.setMethod('GET');
+        req.setTimeout(TIMEOUT_MS);
+        req.setHeader('Accept', 'application/json');
+        try {
+            return new Http().send(req).getStatusCode() == 200;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * /catalog: edificios, activos, sensores, escenarios y umbrales de referencia. Sirve para
+     * contrastar los datos semilla y los límites contra lo que define el simulador.
+     */
+    public Map<String, Object> fetchCatalog() {
+        return parseObject(send('GET', '/catalog', null, null));
+    }
+
     private HttpResponse send(String method, String path, String cursor, String body) {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(NAMED_CREDENTIAL + path);
