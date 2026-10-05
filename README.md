@@ -109,6 +109,17 @@ sf data query --file scripts/soql/signal-trace.soql --target-org novacasa
 
 Para seguir leyendo lotes en segundo plano está `scripts/apex/ingest-async.apex`. Para empezar un escenario nuevo del simulador, `scripts/apex/reset-session.apex`, que borra el cursor guardado.
 
+### Escenarios del simulador (evidencia determinista)
+
+El simulador ofrece escenarios con nombre para reproducir cada historia sin forzar datos: `MIXED`, `QA_200`, `BOUNDARIES`, `CRITICAL_BURST`, `LATE_MESSAGES`, `DUPLICATES`, `CONFLICT`, `INVALID_DATA` y `CAMERA_OUTAGE`. `TelemetryIngestionService.runScenario(escenario, seed, batchSize)` abre una sesión con ese escenario (cuerpo `POST /session` con `scenario`, `seed`, `batchSize` y los dos edificios reales) usando un cursor aparte (`scenario`), para no tocar la ingesta normal:
+
+```bash
+# Edita el escenario arriba del script y corre:
+sf apex run --file scripts/apex/ingest-scenario.apex --target-org novacasa
+```
+
+Por ejemplo: `CRITICAL_BURST` para ver intervenciones (US-205), `DUPLICATES` para la deduplicación, `LATE_MESSAGES` para la recencia (US-203) y `BOUNDARIES` para la severidad en los límites (US-206). La severidad se calcula en la org con `Measurement_Threshold__mdt`, así que las bandas dependen de esos umbrales.
+
 ## Evidencia (28 de septiembre de 2026)
 
 Con una corrida real se recibieron 20 señales, se publicaron 20 y las 20 terminaron en Processed. Por ejemplo, este es el recorrido de una clave:

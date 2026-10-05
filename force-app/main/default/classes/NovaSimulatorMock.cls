@@ -6,6 +6,7 @@ public class NovaSimulatorMock implements HttpCalloutMock {
     public Integer sessionCalls = 0;
     public Integer telemetryCalls = 0;
     public String lastCursor;
+    public String lastSessionBody;
     public Integer telemetryStatus = 200;
 
     public HttpResponse respond(HttpRequest req) {
@@ -15,6 +16,7 @@ public class NovaSimulatorMock implements HttpCalloutMock {
 
         if (endpoint.endsWith('/session')) {
             sessionCalls++;
+            lastSessionBody = req.getBody();
             res.setStatusCode(201);
             res.setBody(sessionBody());
         } else if (endpoint.contains('/telemetry')) {

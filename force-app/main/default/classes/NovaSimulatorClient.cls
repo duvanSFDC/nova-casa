@@ -23,8 +23,32 @@ public inherited sharing class NovaSimulatorClient {
         public Integer pollAfterMs;
     }
 
+    /** Abre una sesión con el escenario por defecto del simulador (cuerpo vacío). */
     public Session startSession() {
-        Map<String, Object> body = parseObject(send('POST', '/session', null, '{}'));
+        return startSession(null, null, null, null);
+    }
+
+    /**
+     * Abre una sesión pidiendo un escenario concreto (MIXED, QA_200, CRITICAL_BURST, ...),
+     * una semilla y los edificios, para reproducir evidencia determinista. Cualquier
+     * parámetro nulo se omite y el simulador usa su valor por defecto.
+     */
+    public Session startSession(String scenario, Long seed, List<String> buildings, Integer batchSize) {
+        Map<String, Object> request = new Map<String, Object>();
+        if (String.isNotBlank(scenario)) {
+            request.put('scenario', scenario);
+        }
+        if (seed != null) {
+            request.put('seed', seed);
+        }
+        if (buildings != null && !buildings.isEmpty()) {
+            request.put('buildings', buildings);
+        }
+        if (batchSize != null) {
+            request.put('batchSize', batchSize);
+        }
+
+        Map<String, Object> body = parseObject(send('POST', '/session', null, JSON.serialize(request)));
 
         Session session = new Session();
         session.cursor = (String) body.get('cursor');
