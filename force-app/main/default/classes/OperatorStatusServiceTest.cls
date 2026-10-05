@@ -83,6 +83,86 @@ private class OperatorStatusServiceTest {
     }
 
     @IsTest
+    static void summarizesEachAssetWithItsWorstReadingAndListsTheWorstFirst() {
+        Fixture data = new Fixture();
+        Datetime occurredAt = Datetime.newInstance(2026, 10, 5, 10, 0, 0);
+        data.condition(data.pump, 'WATER_PRESSURE', 3.5, 'BAR', 'Normal', occurredAt);
+        data.condition(data.pump, 'TEMPERATURE', 36, 'CELSIUS', 'Critical', occurredAt);
+        data.condition(data.fan, 'TEMPERATURE', 31, 'CELSIUS', 'Warning', occurredAt);
+
+        OperatorStatusService.Result result = OperatorStatusService.getAssets(null, null);
+
+        System.assertEquals(4, result.rows.size());
+        System.assertEquals(data.pump.Id, result.rows[0].assetId);
+        System.assertEquals(data.pump.Id, result.rows[1].assetId);
+        System.assertEquals(data.fan.Id, result.rows[2].assetId);
+        System.assertEquals(data.light.Id, result.rows[3].assetId);
+
+        System.assertEquals('Normal', row(result, data.pump.Id, 'WATER_PRESSURE').severity);
+        System.assertEquals('Critical', row(result, data.pump.Id, 'WATER_PRESSURE').assetSeverity);
+        System.assertEquals('Critical', row(result, data.pump.Id, 'TEMPERATURE').assetSeverity);
+        System.assertEquals('Warning', row(result, data.fan.Id, 'TEMPERATURE').assetSeverity);
+        System.assertEquals(null, row(result, data.light.Id, null).assetSeverity);
+    }
+
+    @IsTest
+    static void keepsTheAssetSummaryWhenFilteringBySeverity() {
+        Fixture data = new Fixture();
+        Datetime occurredAt = Datetime.newInstance(2026, 10, 5, 10, 0, 0);
+        data.condition(data.pump, 'WATER_PRESSURE', 0.9, 'BAR', 'Critical', occurredAt);
+        data.condition(data.pump, 'TEMPERATURE', 31, 'CELSIUS', 'Warning', occurredAt);
+
+        OperatorStatusService.Result warnings = OperatorStatusService.getAssets(null, 'Warning');
+
+        System.assertEquals(1, warnings.rows.size());
+        System.assertEquals('TEMPERATURE', warnings.rows[0].measurementType);
+        System.assertEquals('Warning', warnings.rows[0].severity);
+        System.assertEquals('Critical', warnings.rows[0].assetSeverity);
+    }
+
+    @IsTest
+    static void aLostConnectionDoesNotRaiseTheAssetSummary() {
+        Fixture data = new Fixture();
+        Datetime occurredAt = Datetime.newInstance(2026, 10, 5, 10, 0, 0);
+        data.condition(data.fan, 'TEMPERATURE', 25, 'CELSIUS', 'Normal', occurredAt);
+        Database.insert(
+            new Asset_Condition__c(
+                Name = data.fan.Id + ':CONNECTIVITY',
+                Asset__c = data.fan.Id,
+                Measurement_Type__c = 'CONNECTIVITY',
+                Communication_Status__c = 'LOST',
+                Severity__c = 'Normal',
+                Occurred_At__c = occurredAt,
+                Asset_Measurement_Key__c = data.fan.Id + ':CONNECTIVITY'
+            ),
+            AccessLevel.SYSTEM_MODE
+        );
+
+        OperatorStatusService.Result result = OperatorStatusService.getAssets(data.sur.Id, null);
+
+        System.assertEquals(2, result.rows.size());
+        System.assertEquals('LOST', row(result, data.fan.Id, 'CONNECTIVITY').communicationStatus);
+        System.assertEquals('Normal', row(result, data.fan.Id, 'CONNECTIVITY').assetSeverity);
+        System.assertEquals('Normal', row(result, data.fan.Id, 'TEMPERATURE').assetSeverity);
+    }
+
+    @IsTest
+    static void ignoresReadingsWithoutSeverityInTheSummary() {
+        System.assertEquals(
+            'Warning',
+            OperatorStatusService.worstSeverity(new List<Asset_Condition__c>{
+                new Asset_Condition__c(Severity__c = null),
+                new Asset_Condition__c(Severity__c = 'Normal'),
+                new Asset_Condition__c(Severity__c = 'Warning')
+            })
+        );
+        System.assertEquals(
+            null,
+            OperatorStatusService.worstSeverity(new List<Asset_Condition__c>{ new Asset_Condition__c() })
+        );
+    }
+
+    @IsTest
     static void rejectsAnUnknownSeverity() {
         try {
             OperatorStatusService.getAssets(null, 'Urgent');
