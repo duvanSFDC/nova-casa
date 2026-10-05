@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Building_Code__c</fullName>
+    <description>Código del edificio (Location.External_Id__c), copiado por un Flow al guardar. Existe para compartir por edificio (BR-208): las reglas de compartición no pueden filtrar por un lookup. No se edita a mano.</description>
+    <externalId>false</externalId>
+    <inlineHelpText>Código del edificio, lo llena el sistema al guardar.</inlineHelpText>
+    <label>Building Code</label>
+    <length>40</length>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
