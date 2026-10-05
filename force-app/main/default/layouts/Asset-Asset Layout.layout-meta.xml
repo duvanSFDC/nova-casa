@@ -15,6 +15,8 @@
                 <behavior>Readonly</behavior>
                 <field>External_Id__c</field>
             </layoutItems>
+        </layoutColumns>
+        <layoutColumns>
             <layoutItems>
                 <behavior>Edit</behavior>
                 <field>Asset_Type__c</field>
@@ -24,39 +26,7 @@
                 <field>LocationId</field>
             </layoutItems>
         </layoutColumns>
-        <layoutColumns>
-            <layoutItems>
-                <behavior>Edit</behavior>
-                <field>AccountId</field>
-            </layoutItems>
-            <layoutItems>
-                <behavior>Edit</behavior>
-                <field>Status</field>
-            </layoutItems>
-            <layoutItems>
-                <behavior>Edit</behavior>
-                <field>SerialNumber</field>
-            </layoutItems>
-            <layoutItems>
-                <behavior>Edit</behavior>
-                <field>InstallDate</field>
-            </layoutItems>
-        </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
-    </layoutSections>
-    <layoutSections>
-        <customLabel>true</customLabel>
-        <detailHeading>false</detailHeading>
-        <editHeading>false</editHeading>
-        <label>Compartición</label>
-        <layoutColumns>
-            <layoutItems>
-                <behavior>Readonly</behavior>
-                <field>Building_Code__c</field>
-            </layoutItems>
-        </layoutColumns>
-        <layoutColumns/>
-        <style>TwoColumnsLeftToRight</style>
     </layoutSections>
     <layoutSections>
         <customLabel>false</customLabel>
@@ -77,13 +47,6 @@
         </layoutColumns>
         <style>TwoColumnsTopToBottom</style>
     </layoutSections>
-    <layoutSections>
-        <customLabel>false</customLabel>
-        <detailHeading>false</detailHeading>
-        <editHeading>false</editHeading>
-        <layoutColumns/>
-        <style>CustomLinks</style>
-    </layoutSections>
     <relatedLists>
         <fields>NAME</fields>
         <fields>Measurement_Type__c</fields>
@@ -95,11 +58,6 @@
         <relatedList>Asset_Condition__c.Asset__c</relatedList>
     </relatedLists>
     <relatedLists>
-        <fields>Name</fields>
-        <fields>Subject</fields>
-        <fields>Account</fields>
-        <fields>Priority</fields>
-        <fields>Status</fields>
         <relatedList>WorkOrders</relatedList>
     </relatedLists>
     <relatedLists>
