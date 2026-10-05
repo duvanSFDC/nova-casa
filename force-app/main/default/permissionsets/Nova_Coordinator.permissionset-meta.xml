@@ -8,7 +8,7 @@
         <apexClass>OperatorStatusService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
-    <description>Read the operator screen: assets, buildings, the current condition, and the open work order. Read only; which buildings comes from the sharing rules (BR-208).</description>
+    <description>Coordinación (Javier): lee edificios, activos y lecturas, y avanza y cierra intervenciones. No las crea ni borra, no edita lecturas ni límites. Qué edificios ve lo deciden las reglas de compartición (BR-208).</description>
     <fieldPermissions>
         <editable>false</editable>
         <field>Asset.LocationId</field>
@@ -25,7 +25,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
-        <editable>false</editable>
+        <editable>true</editable>
         <field>WorkOrder.Status</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -45,7 +45,7 @@
         <readable>true</readable>
     </fieldPermissions>
     <hasActivationRequired>false</hasActivationRequired>
-    <label>Nova Operator</label>
+    <label>Nova Coordinator</label>
     <objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
@@ -99,7 +99,7 @@
     <objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
-        <allowEdit>false</allowEdit>
+        <allowEdit>true</allowEdit>
         <allowRead>true</allowRead>
         <modifyAllRecords>false</modifyAllRecords>
         <object>WorkOrder</object>

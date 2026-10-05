@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Group xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Operadores de Nova Mirador: leen los registros con código BLD-MDE-001 (BR-208).</description>
+    <doesIncludeBosses>false</doesIncludeBosses>
+    <name>Nova Mirador (BLD-MDE-001)</name>
+</Group>

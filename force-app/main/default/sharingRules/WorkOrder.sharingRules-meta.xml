@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SharingRules xmlns="http://soap.sforce.com/2006/04/metadata">
+    <sharingCriteriaRules>
+        <fullName>Nova_Building_BOG</fullName>
+        <accessLevel>Read</accessLevel>
+        <label>Nova Alameda operators</label>
+        <sharedTo>
+            <group>Nova_Building_BOG</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Building_Code__c</field>
+            <operation>equals</operation>
+            <value>BLD-BOG-001</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Nova_Building_BAQ</fullName>
+        <accessLevel>Read</accessLevel>
+        <label>Nova Caribe operators</label>
+        <sharedTo>
+            <group>Nova_Building_BAQ</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Building_Code__c</field>
+            <operation>equals</operation>
+            <value>BLD-BAQ-001</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Nova_Building_MDE</fullName>
+        <accessLevel>Read</accessLevel>
+        <label>Nova Mirador operators</label>
+        <sharedTo>
+            <group>Nova_Building_MDE</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Building_Code__c</field>
+            <operation>equals</operation>
+            <value>BLD-MDE-001</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Nova_Coordination</fullName>
+        <accessLevel>Edit</accessLevel>
+        <label>Nova coordination</label>
+        <sharedTo>
+            <group>Nova_Coordination</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Building_Code__c</field>
+            <operation>equals</operation>
+            <value>BLD-BOG-001,BLD-BAQ-001,BLD-MDE-001</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+</SharingRules>

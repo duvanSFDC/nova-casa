@@ -1,6 +1,6 @@
 # Nova Casa · Sprint 2: señales IoT en Salesforce
 
-Las señales de los edificios llegan desde el simulador, entran como Platform Event y quedan registradas en Salesforce. Este repo cubre **US-201: recibir señales de los edificios**, **US-202: procesar la colección sin perder las válidas**, **US-203: mantener el estado actual por activo y medición**, **US-204/US-206: límites y severidad** y **US-205: una sola intervención por mensaje crítico**.
+Las señales de los edificios llegan desde el simulador, entran como Platform Event y quedan registradas en Salesforce. Este repo cubre **US-201: recibir señales de los edificios**, **US-202: procesar la colección sin perder las válidas**, **US-203: mantener el estado actual por activo y medición**, **US-204/US-206: límites y severidad**, **US-205: una sola intervención por mensaje crítico** y **US-208: respetar la autorización del usuario**.
 
 ## Cómo fluye una señal
 
@@ -38,7 +38,43 @@ Cada log guarda cuatro horas por separado:
 - `objects/Measurement_Threshold__mdt` y sus registros en `customMetadata/`: qué unidad acepta cada tipo de equipo y medición. Se editan sin redesplegar (BR-204).
 - `platformEventSubscriberConfigs/TelemetrySignalTriggerConfig`: hace que el suscriptor reciba hasta 200 eventos por invocación.
 - `classes/OperatorStatusService` y `lwc/operatorStatus`: la pantalla *Estado operativo* de Laura (lecturas vigentes, estado del activo e intervención abierta). `permissionsets/Nova_Operator`: el acceso de Laura a esa pantalla.
-- `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta. `permissionsets/Nova_Admin`: acceso de solo lectura a la traza para Camila.
+- `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta. `permissionsets/Nova_Admin`: acceso de solo lectura a la traza para Camila. `permissionsets/Nova_Coordinator`: el acceso de Javier (lee y avanza intervenciones).
+- `groups/` (un grupo por edificio y `Nova_Coordination`), `sharingRules/` y los flujos `Asset_Building_Code`, `Asset_Condition_Building_Code` y `Work_Order_Building_Code`, que copian el código del edificio a `Building_Code__c`: quién ve qué edificio (BR-208).
+
+## Matriz de acceso (BR-208)
+
+Cada persona ve solo lo que su oficio necesita, y el recorte se aplica en el servidor, no solo en la pantalla.
+
+| Qué | Operador · Laura (`Nova_Operator`) | Coordinador · Javier (`Nova_Coordinator`) | Administradora · Camila (`Nova_Admin`) |
+| --- | --- | --- | --- |
+| Edificios (`Location`) y activos (`Asset`) | Lectura, solo sus edificios | Lectura, los edificios que coordina (en la demo, los tres) | Lectura, todos |
+| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Lectura, todas |
+| Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | Lectura |
+| Pantalla *Estado operativo* | Sí | Sí | No la necesita |
+| Errores técnicos (`Signal_Log__c`) | No | No | Lectura |
+| Límites de severidad (`Measurement_Threshold__mdt`) | No | No; pide el cambio a Camila | Edita; el permiso (*Customize Application*) viene de su perfil de administradora, no de `Nova_Admin` |
+| Crear, editar o borrar lecturas | No | No | No; solo las escribe la ingesta |
+
+Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crítica vigente.
+
+**Cómo se cumple.** `Location`, `Asset` y `Asset_Condition__c` son privados (`WorkOrder` y `Signal_Log__c` ya lo eran). Cada registro lleva el código de su edificio en un campo de texto, porque las reglas de compartición no pueden filtrar por un lookup; un grupo público por edificio recibe en solo lectura los registros de ese código. `OperatorStatusService` corre `with sharing` y consulta `WITH USER_MODE`, así que pedirle a Apex otro edificio no devuelve nada aunque se salte la pantalla. Los permission sets ponen el techo de objetos y campos; las reglas de compartición, qué registros.
+
+**Detalles que importan al montarlo:**
+
+- `Location`, `Asset.LocationId` y `WorkOrder` son de Field Service: sin el permiso de usuario *Field Service Access* la plataforma los esconde ("No such column"). `Nova_Operator` y `Nova_Coordinator` lo incluyen, junto con *Lightning Experience User*, para que funcionen sobre el perfil *Minimum Access - Salesforce*.
+- La pantalla pide `WorkOrder.IsClosed` para mostrar solo las intervenciones abiertas; sin lectura sobre ese campo la consulta falla entera. Ambos permission sets lo leen.
+- `Asset` estaba *Controlled by Parent* (lo veía quien veía la cuenta). Hay que dejarlo privado **antes** de desplegar sus reglas de compartición: van en dos despliegues.
+- El código del edificio de un `WorkOrder` lo copia un flujo al guardarlo desde su `Location`. La intervención que abre `InterventionService` pasa por ese flujo dentro de la misma transacción.
+- Las reglas de compartición por criterio no se evalúan en las pruebas de Apex de esta org. `OperatorAccessTest` inserta los mismos registros de compartición que darían las reglas; que las reglas reales los den se comprobó en vivo (abajo).
+
+**La ingesta tiene su propia autorización.** No corre con los permisos de ninguna persona:
+
+| Identidad | Qué hace | Acceso |
+| --- | --- | --- |
+| *Usuario Integración* (solo API) | Llama al simulador y publica los eventos (`TelemetryIngestionService`, `TelemetryIngestionJob`) | `Nova_Integration` y `Nova_Simulator_Access` |
+| *Automated Process* | Corre el suscriptor del Platform Event: valida, clasifica, escribe el estado, los logs y las intervenciones | Plataforma; todas sus consultas y escrituras son `SYSTEM_MODE` explícito |
+
+`Asset_Signal_Log__c` no lo usa ningún código y no tiene registros; queda privado hasta decidir si se borra.
 
 ## Antes de empezar
 
@@ -55,7 +91,8 @@ sf project deploy start --source-dir force-app --target-org novacasa \
   --tests TelemetrySignalValidatorTest --tests TelemetrySignalProcessingTest \
   --tests TelemetryStateProcessingTest --tests MeasurementSeverityClassifierTest \
   --tests TelemetrySignalSeverityTest --tests InterventionProcessingTest \
-  --tests OperatorStatusServiceTest
+  --tests OperatorStatusServiceTest --tests BuildingCodeFlowTest \
+  --tests OperatorAccessTest
 
 # 1b. Pruebas de la pantalla (Jest)
 npm install && npm run test:unit
@@ -125,6 +162,23 @@ Se publicaron al bus 11 señales de prueba (`Source = us-206-evidence`, `Deliver
 | Límite | Bomba de agua Caribe | 1.6 · 1.5 · 1.1 · 1.0 bar | 1.5 / 1.0 (Below) | Normal · Warning · Warning · Critical | solo 1.0 → 00000146 |
 
 Solo las críticas abrieron intervención (por el camino de US-205); normal y advertencia solo actualizaron la lectura. En la pantalla *Estado operativo* los tres activos críticos quedaron arriba con *Crítico* en rojo y su Work Order, luego las advertencias y al final los normales y el activo sin lectura. Las pruebas `OperatorStatusServiceTest` (estado del activo, filtro y conectividad) y las de Jest de `operatorStatus` cubren lo mismo de forma determinista; los límites exactos ya los cubre `MeasurementSeverityClassifierTest`.
+
+## Evidencia US-208 (5 de octubre de 2026)
+
+Se crearon cuatro usuarios de prueba con el perfil *Minimum Access - Salesforce* (correos ficticios `@novacasa.inv`) y se entró como cada uno con *Login As*. Además de la pantalla, se llamó a `OperatorStatusService` directamente desde el navegador, saltándose la interfaz:
+
+| Usuario | Permisos | Pantalla *Estado operativo* | Apex directo |
+| --- | --- | --- | --- |
+| `opbog.us208` · Laura Alameda | `Nova_Operator`, grupo Nova Alameda | 5 equipos, todos de Nova Alameda | `getBuildings` solo devuelve Alameda; `getAssets(Nova Mirador)` → 0 filas |
+| `opmde.us208` · Laura Mirador | `Nova_Operator`, grupo Nova Mirador | 1 equipo (Bomba de agua, Nova Mirador) | `getAssets(Nova Alameda)` → 0 filas |
+| `coord.us208` · Javier | `Nova_Coordinator`, grupo `Nova_Coordination` | 11 equipos de los tres edificios, con sus intervenciones | Los tres edificios |
+| `noacc.us208` · Sin acceso | Ninguno | La pestaña no existe | Error: *No tiene acceso a la clase de Apex denominada 'OperatorStatusService'* |
+
+Las capturas de cada usuario están en `docs/evidencia-us208/`: [operadora de Alameda](docs/evidencia-us208/operadora-alameda.png), [operador de Mirador](docs/evidencia-us208/operador-mirador.png), [coordinador](docs/evidencia-us208/coordinador.png) y [sin acceso](docs/evidencia-us208/sin-acceso.png).
+
+Sobre los mismos usuarios, `UserRecordAccess` confirmó que la operadora de Alameda lee sus 3 intervenciones sin poder editarlas y que el coordinador sí puede editar las 4. Una señal crítica procesada después de los cambios abrió el Work Order 00000184 con su `Building_Code__c = BLD-BOG-001`.
+
+`OperatorAccessTest` cubre lo mismo de forma determinista con usuarios distintos: cada operadora solo ve su edificio, pedir otro por Apex no devuelve nada, la operadora no puede cambiar lecturas ni intervenciones, un campo sin permiso (`Sensor_Id__c`) se rechaza aunque el registro sea visible, solo la administradora lee los errores técnicos, el coordinador ve todo y avanza intervenciones, y un usuario sin permisos recibe el error. `BuildingCodeFlowTest` comprueba que los tres flujos copian el código del edificio.
 
 ## Decisiones
 

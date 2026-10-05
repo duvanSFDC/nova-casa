@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Group xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Coordinación de mantenimiento: lee los edificios que coordina y edita sus intervenciones (BR-208).</description>
+    <doesIncludeBosses>false</doesIncludeBosses>
+    <name>Nova Coordinación</name>
+</Group>
