@@ -47,6 +47,45 @@ private class TelemetryIngestionServiceTest {
     }
 
     @IsTest
+    static void runScenarioOpensASessionWithTheScenarioAndIngests() {
+        NovaSimulatorMock mock = new NovaSimulatorMock();
+        Test.setMock(HttpCalloutMock.class, mock);
+
+        Test.startTest();
+        TelemetryIngestionService.Result result = new TelemetryIngestionService().runScenario('critical_burst', 20260922L, 50);
+        Test.stopTest();
+
+        Assert.areEqual(1, mock.sessionCalls, 'El escenario siempre abre una sesión nueva');
+        Assert.isTrue(result.sessionStarted);
+        Assert.areEqual(2, result.received);
+        // El cuerpo de /session lleva el escenario (normalizado), la semilla y los edificios.
+        Assert.isTrue(mock.lastSessionBody.contains('CRITICAL_BURST'), mock.lastSessionBody);
+        Assert.isTrue(mock.lastSessionBody.contains('20260922'), mock.lastSessionBody);
+        Assert.isTrue(mock.lastSessionBody.contains('BLD-BOG-001'), mock.lastSessionBody);
+
+        // Usa su propio cursor ('scenario'), separado de la ingesta normal ('default').
+        Ingestion_State__c state = [SELECT Name, Cursor__c FROM Ingestion_State__c WITH SYSTEM_MODE];
+        Assert.areEqual(TelemetryIngestionService.SCENARIO_STATE_NAME, state.Name);
+        Assert.areEqual(NovaSimulatorMock.NEXT_CURSOR, state.Cursor__c);
+    }
+
+    @IsTest
+    static void runScenarioRejectsAnUnknownScenario() {
+        Test.setMock(HttpCalloutMock.class, new NovaSimulatorMock());
+
+        Test.startTest();
+        try {
+            new TelemetryIngestionService().runScenario('NO_EXISTE', null, 10);
+            Assert.fail('Un escenario desconocido debe rechazarse antes de llamar al simulador');
+        } catch (NovaSimulatorClient.SimulatorException e) {
+            Assert.isTrue(e.getMessage().contains('NO_EXISTE'), e.getMessage());
+        }
+        Test.stopTest();
+
+        Assert.areEqual(0, [SELECT COUNT() FROM Signal_Log__c WITH SYSTEM_MODE], 'No se publicó nada');
+    }
+
+    @IsTest
     static void publishedIsDistinctFromProcessed() {
         Test.setMock(HttpCalloutMock.class, new NovaSimulatorMock());
 
