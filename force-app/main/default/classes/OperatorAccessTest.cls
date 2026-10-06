@@ -109,6 +109,47 @@ private class OperatorAccessTest {
     }
 
     @IsTest
+    static void onlyTheAdministratorInvestigatesSignals() {
+        Fixture data = new Fixture();
+        String investigation = 'SELECT Message_Id__c, Investigation_Status__c, Retry_Guidance__c FROM Signal_Log__c';
+
+        for (User person : new List<User>{ data.alamedaOperator, data.coordinator, data.withoutAccess }) {
+            System.runAs(person) {
+                try {
+                    Database.query(investigation, AccessLevel.USER_MODE);
+                    System.assert(false, person.LastName + ' should not investigate signals.');
+                } catch (QueryException expected) {
+                    System.assert(expected.getMessage().contains('Signal_Log__c'), expected.getMessage());
+                }
+            }
+        }
+
+        System.runAs(data.administrator) {
+            List<Signal_Log__c> logs = Database.query(investigation, AccessLevel.USER_MODE);
+            System.assertEquals(1, logs.size());
+            System.assertNotEquals(null, logs[0].Investigation_Status__c);
+            System.assertNotEquals(null, logs[0].Retry_Guidance__c);
+
+            logs[0].Message_Id__c = 'msg_changed';
+            try {
+                Database.update(logs[0], AccessLevel.USER_MODE);
+                System.assert(false, 'The administrator reads the trace but should not rewrite it.');
+            } catch (Exception expected) {
+                System.assert(!(expected instanceof System.AssertException), expected.getMessage());
+            }
+        }
+
+        List<PermissionSetTabSetting> tabs = [
+            SELECT Parent.Name
+            FROM PermissionSetTabSetting
+            WHERE Name = 'Signal_Log__c' AND Parent.IsOwnedByProfile = false AND Parent.Name LIKE 'Nova_%'
+            WITH SYSTEM_MODE
+        ];
+        System.assertEquals(1, tabs.size(), 'Only one Nova permission set should show the trace tab.');
+        System.assertEquals('Nova_Admin', tabs[0].Parent.Name);
+    }
+
+    @IsTest
     static void theCoordinatorSeesEveryBuildingAndMovesWorkOrders() {
         Fixture data = new Fixture();
 

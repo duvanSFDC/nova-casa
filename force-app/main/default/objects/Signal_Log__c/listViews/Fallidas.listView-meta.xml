@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fallidas</fullName>
+    <columns>NAME</columns>
+    <columns>Message_Id__c</columns>
+    <columns>Investigation_Status__c</columns>
+    <columns>Reason__c</columns>
+    <columns>Occurred_At__c</columns>
+    <columns>Processed_At__c</columns>
+    <columns>Retry_Guidance__c</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Investigation_Status__c</field>
+        <operation>startsWith</operation>
+        <value>Fallida</value>
+    </filters>
+    <label>Fallidas (técnicas)</label>
+</ListView>
