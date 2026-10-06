@@ -246,6 +246,8 @@ Se crearon cuatro usuarios de prueba con el perfil *Minimum Access - Salesforce*
 | `javier@novacasa.com` · Javier Coordinador | `Nova_Coordinator`, grupo `Nova_Coordination` | 11 equipos de los tres edificios, con sus intervenciones | Los tres edificios |
 | `pepito@novacasa.com` · Pepito Pérez, sin acceso | Ninguno | La pestaña no existe | Error: *No tiene acceso a la clase de Apex denominada 'OperatorStatusService'* |
 
+**Cambio posterior (6 de octubre de 2026).** Para la historia de entrega, en la que Laura opera dos edificios, se agregó a `laura@novacasa.com` al grupo Nova Mirador. Desde entonces Laura ve 6 equipos: los 5 de Nova Alameda y la bomba de Nova Mirador. Sigue sin ver nada de Nova Caribe, y Pedro sigue viendo solo Nova Mirador. Es un cambio de datos en la org (un miembro de grupo), no de metadata: no hay código que desplegar y los tests no dependen de estos usuarios. La tabla de arriba y las capturas muestran el estado del 5 de octubre.
+
 Las capturas de cada usuario están en `docs/evidencia-us208/`: [operadora de Alameda](docs/evidencia-us208/operadora-alameda.png), [operador de Mirador](docs/evidencia-us208/operador-mirador.png), [coordinador](docs/evidencia-us208/coordinador.png) y [sin acceso](docs/evidencia-us208/sin-acceso.png).
 
 Sobre los mismos usuarios, `UserRecordAccess` confirmó que la operadora de Alameda lee sus 3 intervenciones sin poder editarlas y que el coordinador sí puede editar las 4. Una señal crítica procesada después de los cambios abrió el Work Order 00000184 con su `Building_Code__c = BLD-BOG-001`.
