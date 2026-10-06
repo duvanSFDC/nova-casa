@@ -48,16 +48,28 @@ public inherited sharing class InterventionService {
         Map<String, Id> workOrderIdByKey = existingWorkOrders(indexByMessageId.keySet());
 
         // 3. Reutilizar las que existen; preparar la creación de las nuevas.
-        List<WorkOrder> toInsert = new List<WorkOrder>();
         List<Integer> insertPositions = new List<Integer>();
+        List<String> insertMessageIds = new List<String>();
+        Set<Id> newAssetIds = new Set<Id>();
         for (String messageId : indexByMessageId.keySet()) {
             Integer i = indexByMessageId.get(messageId);
             if (workOrderIdByKey.containsKey(messageId)) {
                 outcomes[i].withWorkOrder(workOrderIdByKey.get(messageId));
             } else {
-                toInsert.add(buildWorkOrder(messageId, outcomes[i], events[i]));
                 insertPositions.add(i);
+                insertMessageIds.add(messageId);
+                if (outcomes[i].assetId != null) {
+                    newAssetIds.add(outcomes[i].assetId);
+                }
             }
+        }
+
+        // El nombre del equipo hace legible la causa (no el código del simulador).
+        Map<Id, String> assetNameById = assetNames(newAssetIds);
+        List<WorkOrder> toInsert = new List<WorkOrder>();
+        for (Integer k = 0; k < insertPositions.size(); k++) {
+            Integer i = insertPositions[k];
+            toInsert.add(buildWorkOrder(insertMessageIds[k], outcomes[i], events[i], assetNameById));
         }
 
         createInterventions(toInsert, insertPositions, events, outcomes);
@@ -102,20 +114,60 @@ public inherited sharing class InterventionService {
         return byKey;
     }
 
-    private static WorkOrder buildWorkOrder(String messageId, TelemetrySignalOutcome outcome, Telemetry_Signal__e evt) {
+    private static WorkOrder buildWorkOrder(
+        String messageId,
+        TelemetrySignalOutcome outcome,
+        Telemetry_Signal__e evt,
+        Map<Id, String> assetNameById
+    ) {
         return new WorkOrder(
             Message_Key__c = messageId,
             AssetId = outcome.assetId,
             LocationId = outcome.locationId,
             Status = STATUS_NEW,
             Priority = PRIORITY_CRITICAL,
-            Subject = cause(evt)
+            Subject = cause(evt, assetNameById.get(outcome.assetId))
         );
     }
 
-    private static String cause(Telemetry_Signal__e evt) {
-        String reading = evt.Measurement_Type__c + ' ' + evt.Measurement_Value__c + ' ' + evt.Measurement_Unit__c;
-        return ('Crítico · ' + reading + ' · ' + evt.Asset_Id__c).abbreviate(SUBJECT_MAX);
+    /** Nombres de los equipos que abrirán intervención, en una sola consulta. */
+    private static Map<Id, String> assetNames(Set<Id> assetIds) {
+        Map<Id, String> names = new Map<Id, String>();
+        if (assetIds.isEmpty()) {
+            return names;
+        }
+        for (Asset equipment : [SELECT Id, Name FROM Asset WHERE Id IN :assetIds WITH SYSTEM_MODE]) {
+            names.put(equipment.Id, equipment.Name);
+        }
+        return names;
+    }
+
+    /**
+     * Causa legible para la persona: "Crítico · Temperatura 35 °C · Ventilación".
+     * Usa los nombres amigables de MeasurementLabels y el nombre del equipo; si no hay
+     * nombre a mano, cae al código del simulador.
+     */
+    private static String cause(Telemetry_Signal__e evt, String assetName) {
+        String measurement = capitalize(MeasurementLabels.typeLabel(evt.Measurement_Type__c));
+        String unit = MeasurementLabels.unitLabel(evt.Measurement_Unit__c);
+        String reading = measurement + ' ' + formatValue(evt.Measurement_Value__c);
+        if (String.isNotBlank(unit)) {
+            reading += ' ' + unit;
+        }
+        String equipment = String.isNotBlank(assetName) ? assetName : evt.Asset_Id__c;
+        return ('Crítico · ' + reading + ' · ' + equipment).abbreviate(SUBJECT_MAX);
+    }
+
+    /** El valor sin ceros de relleno: 35.0000 -> 35, 0.8000 -> 0.8. */
+    private static String formatValue(Object raw) {
+        if (raw == null) {
+            return '';
+        }
+        return Decimal.valueOf(String.valueOf(raw)).stripTrailingZeros().toPlainString();
+    }
+
+    private static String capitalize(String text) {
+        return String.isBlank(text) ? text : text.substring(0, 1).toUpperCase() + text.substring(1);
     }
 
     /**
