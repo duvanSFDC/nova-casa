@@ -128,7 +128,7 @@ sf project deploy start --source-dir force-app --target-org novacasa \
   --tests TelemetrySignalSeverityTest --tests InterventionProcessingTest \
   --tests OperatorStatusServiceTest --tests BuildingCodeFlowTest \
   --tests OperatorAccessTest --tests SignalLogInvestigationTest \
-  --tests SignalLogSensitiveDataTest
+  --tests SignalLogSensitiveDataTest --tests MeasurementLabelsTest
 
 # 1b. Pruebas de la pantalla (Jest)
 npm install && npm run test:unit
@@ -216,7 +216,7 @@ La prueba automática `TelemetryStateProcessingTest` cubre esto de forma determi
 
 ## Evidencia US-205 (2 de octubre de 2026)
 
-El camino crítico → intervención se prueba de forma determinista con `InterventionProcessingTest` (8 casos): una crítica crea **una** intervención con activo, edificio, causa, severidad (`Priority = Critical`) y seguimiento (`Status = New`); un reenvío entre entregas no crea una segunda y reutiliza la existente; un duplicado dentro de la colección deja una sola; una misma identidad con contenido distinto es conflicto; una crítica atrasada no abre intervención; una falla de creación deja la señal como `Rejected`/`INTERVENTION_FAILED` reintentable (nunca procesada sin su resultado); y 200 críticas mantienen el costo en 6 consultas y 3 escrituras por lote.
+El camino crítico → intervención se prueba de forma determinista con `InterventionProcessingTest` (8 casos): una crítica crea **una** intervención con activo, edificio, causa, severidad (`Priority = Critical`) y seguimiento (`Status = New`); un reenvío entre entregas no crea una segunda y reutiliza la existente; un duplicado dentro de la colección deja una sola; una misma identidad con contenido distinto es conflicto; una crítica atrasada no abre intervención; una falla de creación deja la señal como `Rejected`/`INTERVENTION_FAILED` reintentable (nunca procesada sin su resultado); y 200 críticas mantienen el costo en 7 consultas y 3 escrituras por lote (la séptima resuelve el nombre del equipo para la causa legible).
 
 En una corrida real de **200 señales** el flujo integrado quedó así: **15 Accepted, 8 Duplicate, 175 Late y 2 Rejected**. Los 8 duplicados muestran la deduplicación por identidad funcionando en vivo (el simulador reenvía mensajes). En ese lote no llegó ninguna crítica (las presiones reales estuvieron sobre el umbral), así que no se abrieron intervenciones; la clasificación crítica depende de los umbrales reales que entregará Emiliano.
 
