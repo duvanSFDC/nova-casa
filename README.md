@@ -128,7 +128,8 @@ sf project deploy start --source-dir force-app --target-org novacasa \
   --tests TelemetrySignalSeverityTest --tests InterventionProcessingTest \
   --tests OperatorStatusServiceTest --tests BuildingCodeFlowTest \
   --tests OperatorAccessTest --tests SignalLogInvestigationTest \
-  --tests SignalLogSensitiveDataTest --tests MeasurementLabelsTest
+  --tests SignalLogSensitiveDataTest --tests MeasurementLabelsTest \
+  --tests TelemetryPublisherTest
 
 # 1b. Pruebas de la pantalla (Jest)
 npm install && npm run test:unit

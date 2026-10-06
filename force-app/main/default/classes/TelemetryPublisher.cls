@@ -33,8 +33,7 @@ public inherited sharing class TelemetryPublisher {
                 log.Event_Uuid__c = evt.EventUuid;
                 outcome.published++;
             } else {
-                log.Status__c = STATUS_PUBLISH_FAILED;
-                log.Error__c = describe(result.getErrors());
+                log = failedLog(evt, describe(result.getErrors()));
                 outcome.failed++;
             }
             outcome.logs.add(log);
@@ -42,6 +41,19 @@ public inherited sharing class TelemetryPublisher {
 
         Database.insert(outcome.logs, true, AccessLevel.SYSTEM_MODE);
         return outcome;
+    }
+
+    /**
+     * Log de una señal que no pudo publicarse. Volver a publicar es seguro (nada quedó en el bus),
+     * así que se marca Retry_Safe__c para que quien investigue (BR-209) sepa que puede reintentar.
+     */
+    @TestVisible
+    private static Signal_Log__c failedLog(Telemetry_Signal__e evt, String errorDetail) {
+        Signal_Log__c log = baseLog(evt);
+        log.Status__c = STATUS_PUBLISH_FAILED;
+        log.Error__c = errorDetail;
+        log.Retry_Safe__c = true;
+        return log;
     }
 
     public static Signal_Log__c baseLog(Telemetry_Signal__e evt) {
