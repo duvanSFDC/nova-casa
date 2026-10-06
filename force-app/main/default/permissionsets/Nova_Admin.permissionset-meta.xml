@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <applicationVisibilities>
+        <application>Nova_Casa</application>
+        <visible>true</visible>
+    </applicationVisibilities>
     <description>Administración de Nova Casa (Camila): mantener los códigos del catálogo de edificios y equipos, y consultar qué pasó con cada señal, por qué se rechazó y en qué quedó la condición del equipo.</description>
     <fieldPermissions>
         <editable>true</editable>
@@ -74,6 +78,16 @@
     <fieldPermissions>
         <editable>false</editable>
         <field>Signal_Log__c.Event_Uuid__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Signal_Log__c.Investigation_Status__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>Signal_Log__c.Retry_Guidance__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -228,4 +242,8 @@
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
+    <tabSettings>
+        <tab>Signal_Log__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 </PermissionSet>

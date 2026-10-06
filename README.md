@@ -1,6 +1,6 @@
 # Nova Casa · Sprint 2: señales IoT en Salesforce
 
-Las señales de los edificios llegan desde el simulador, entran como Platform Event y quedan registradas en Salesforce. Este repo cubre **US-201: recibir señales de los edificios**, **US-202: procesar la colección sin perder las válidas**, **US-203: mantener el estado actual por activo y medición**, **US-204/US-206: límites y severidad**, **US-205: una sola intervención por mensaje crítico** y **US-208: respetar la autorización del usuario**.
+Las señales de los edificios llegan desde el simulador, entran como Platform Event y quedan registradas en Salesforce. Este repo cubre **US-201: recibir señales de los edificios**, **US-202: procesar la colección sin perder las válidas**, **US-203: mantener el estado actual por activo y medición**, **US-204/US-206: límites y severidad**, **US-205: una sola intervención por mensaje crítico**, **US-208: respetar la autorización del usuario** y **US-209: investigar el procesamiento**.
 
 ## Cómo fluye una señal
 
@@ -29,7 +29,7 @@ Cada log guarda cuatro horas por separado:
 ## Qué hay en el repo
 
 - `objects/Telemetry_Signal__e`: el contrato. Tiene edificio, activo, medición, valor, unidad, fecha de origen, `messageId` y `deliveryId`, y guarda el payload crudo.
-- `objects/Signal_Log__c`: la traza de cada señal.
+- `objects/Signal_Log__c`: la traza de cada señal. Para investigarla (BR-209) tiene dos fórmulas, `Investigation_Status__c` y `Retry_Guidance__c`, sus listas en `listViews/`, la pestaña `tabs/Signal_Log__c`, la ficha `layouts/Signal_Log__c-Signal Log Layout` y la vista compacta `Signal_Log_Investigation`.
 - `objects/Ingestion_State__c`: el cursor del simulador y cuándo vence la sesión. Es un objeto y no un Custom Setting, porque el cursor pasa de 255 caracteres.
 - `classes/NovaSimulatorClient`: las llamadas HTTP, usando la Named Credential `Nova_Simulator`.
 - `classes/TelemetrySignalMapper`, `TelemetryPublisher`, `TelemetrySignalSubscriber`, `TelemetryIngestionService` y `TelemetryIngestionJob` (el Queueable).
@@ -51,7 +51,7 @@ Cada persona ve solo lo que su oficio necesita, y el recorte se aplica en el ser
 | Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Lectura, todas |
 | Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | Lectura |
 | Pantalla *Estado operativo* | Sí | Sí | No la necesita |
-| Errores técnicos (`Signal_Log__c`) | No | No | Lectura |
+| Errores técnicos (`Signal_Log__c`) | No | No | Lectura, desde la pestaña *Signal Logs* (BR-209); nadie la edita |
 | Límites de severidad (`Measurement_Threshold__mdt`) | No | No; pide el cambio a Camila | Edita; el permiso (*Customize Application*) viene de su perfil de administradora, no de `Nova_Admin` |
 | Crear, editar o borrar lecturas | No | No | No; solo las escribe la ingesta |
 
@@ -76,6 +76,41 @@ Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crí
 
 `Asset_Signal_Log__c` no lo usa ningún código y no tiene registros; queda privado hasta decidir si se borra.
 
+## Cómo investigar una señal (BR-209)
+
+Cada señal deja un `Signal_Log__c` que se guarda como registro, no en un log temporal. Camila lo consulta desde la pestaña **Signal Logs** de la app Nova Casa; solo `Nova_Admin` la ve, y nadie puede editar la traza.
+
+1. **Buscar por identidad.** En el buscador de Salesforce, el `messageId`, el `deliveryId` o el `EventUuid` llevan al log. Un mismo `messageId` puede traer varios logs: el original y sus reenvíos.
+2. **Ver qué pasó.** La ficha empieza por *¿Qué pasó y qué hago?*: el estado de investigación, qué hacer, el detalle del error, el resultado, el motivo y si se puede reintentar. Luego vienen la identidad, las cuatro horas (origen, publicación del simulador, publicación en Salesforce y procesamiento) y los registros relacionados (edificio, equipo e intervención).
+3. **Revisar por grupo.** Las listas ya filtradas: *Rechazadas*, *Fallidas (técnicas)*, *Duplicadas*, *Atrasadas*, *Pendientes de procesar*, *Para corregir y reintentar* y *No reintentar: lo corrige el origen*.
+
+`Investigation_Status__c` junta la etapa, el resultado y el motivo en un solo valor, y `Retry_Guidance__c` dice qué hacer:
+
+| Estado | Cuándo | Qué hacer |
+| --- | --- | --- |
+| Procesada | Aceptada | Nada |
+| Rechazada | El dato no sirve; `Reason__c` dice por qué | Depende del motivo (abajo) |
+| Duplicada | Reenvío de un `messageId` ya procesado | Nada: el original ya se procesó |
+| Atrasada | Más vieja que la lectura vigente | Nada: ya hay una lectura más reciente |
+| Fallida: no se publicó | El bus rechazó la publicación (`Publish_Failed`) | Seguro reintentar a mano: volver a publicar |
+| Fallida: no se creó la intervención | `INTERVENTION_FAILED` | Seguro reintentar: el `Message_Key__c` evita una segunda intervención |
+| Pendiente | Publicada y aún sin procesar | Esperar; si pasan minutos, revisar que el trigger no esté suspendido |
+| Procesada sin resultado (anterior a US-202) | Los 40 logs del 29 de septiembre, de antes de que existiera `Result__c` | Nada |
+
+Según el motivo del rechazo:
+
+- **Corregir en Salesforce y reintentar** (`Retry_Safe__c` marcado): `UNKNOWN_BUILDING`, `UNKNOWN_ASSET`, `ASSET_NOT_IN_BUILDING`, `UNSUPPORTED_MEASUREMENT` y los `THRESHOLD_*`. El problema está en el catálogo o en los límites, y la guía dice cuál de los dos.
+- **No reintentar, lo corrige el origen** (`Retry_Safe__c` sin marcar): `INCOMPLETE`, `INCOMPATIBLE_UNIT`, `UNKNOWN_MESSAGE_TYPE` e `IDENTITY_CONFLICT`. Reprocesar la misma señal daría el mismo resultado.
+
+**Qué no se guarda.** El token del simulador vive solo en la Named Credential y el código nunca lo lee. El mensaje crudo (`Raw_Payload__c`) va solo en el evento del bus, no en el log. El log guarda identificadores, horas, códigos, resultado y un detalle de hasta 255 caracteres; no guarda el valor medido, el sensor ni la ciudad. `SignalLogSensitiveDataTest` falla si alguien agrega al log un campo de texto largo o con nombre de secreto, o si una señal copia su payload en el log.
+
+**Límites conocidos:**
+
+- Si el simulador falla (está caído, responde un error o la sesión venció), falla el lote antes de que exista una señal: no queda log por mensaje y el error solo queda en el trabajo programado, que Salesforce borra con el tiempo.
+- Si falla el guardado de un log, el error solo queda en el debug (ver *Riesgo aceptado* en Decisiones).
+- En `Publish_Failed`, `Retry_Safe__c` queda sin marcar porque el publicador no lo llena; ahí vale `Retry_Guidance__c`.
+- La pestaña no tiene botón de reproceso; reintentar es volver a publicar la señal (la tarjeta no lo exige).
+
 ## Antes de empezar
 
 1. La org debe tener la **External Credential** y la **Named Credential** `Nova_Simulator`, con el token en el principal `Nova_Team`, y el permission set **Nova Simulator Access** asignado. El token se configura solo en la org y nunca se sube a este repo.
@@ -92,7 +127,8 @@ sf project deploy start --source-dir force-app --target-org novacasa \
   --tests TelemetryStateProcessingTest --tests MeasurementSeverityClassifierTest \
   --tests TelemetrySignalSeverityTest --tests InterventionProcessingTest \
   --tests OperatorStatusServiceTest --tests BuildingCodeFlowTest \
-  --tests OperatorAccessTest
+  --tests OperatorAccessTest --tests SignalLogInvestigationTest \
+  --tests SignalLogSensitiveDataTest
 
 # 1b. Pruebas de la pantalla (Jest)
 npm install && npm run test:unit
@@ -200,14 +236,14 @@ Solo las críticas abrieron intervención (por el camino de US-205); normal y ad
 
 ## Evidencia US-208 (5 de octubre de 2026)
 
-Se crearon cuatro usuarios de prueba con el perfil *Minimum Access - Salesforce* (correos ficticios `@novacasa.inv`) y se entró como cada uno con *Login As*. Además de la pantalla, se llamó a `OperatorStatusService` directamente desde el navegador, saltándose la interfaz:
+Se crearon cuatro usuarios de prueba con el perfil *Minimum Access - Salesforce* y se entró como cada uno con *Login As*. No representan a personas reales: cada uno es un caso de acceso distinto. Sus correos llegan al buzón de Duván (`duvan.mondragon+…@salesforce.com`), para que los códigos de verificación lleguen a alguien. Además de la pantalla, se llamó a `OperatorStatusService` directamente desde el navegador, saltándose la interfaz:
 
 | Usuario | Permisos | Pantalla *Estado operativo* | Apex directo |
 | --- | --- | --- | --- |
-| `opbog.us208` · Laura Alameda | `Nova_Operator`, grupo Nova Alameda | 5 equipos, todos de Nova Alameda | `getBuildings` solo devuelve Alameda; `getAssets(Nova Mirador)` → 0 filas |
-| `opmde.us208` · Laura Mirador | `Nova_Operator`, grupo Nova Mirador | 1 equipo (Bomba de agua, Nova Mirador) | `getAssets(Nova Alameda)` → 0 filas |
-| `coord.us208` · Javier | `Nova_Coordinator`, grupo `Nova_Coordination` | 11 equipos de los tres edificios, con sus intervenciones | Los tres edificios |
-| `noacc.us208` · Sin acceso | Ninguno | La pestaña no existe | Error: *No tiene acceso a la clase de Apex denominada 'OperatorStatusService'* |
+| `laura@novacasa.com` · Laura Alameda | `Nova_Operator`, grupo Nova Alameda | 5 equipos, todos de Nova Alameda | `getBuildings` solo devuelve Alameda; `getAssets(Nova Mirador)` → 0 filas |
+| `pedro@novacasa.com` · Pedro Mirador | `Nova_Operator`, grupo Nova Mirador | 1 equipo (Bomba de agua, Nova Mirador) | `getAssets(Nova Alameda)` → 0 filas |
+| `javier@novacasa.com` · Javier Coordinador | `Nova_Coordinator`, grupo `Nova_Coordination` | 11 equipos de los tres edificios, con sus intervenciones | Los tres edificios |
+| `pepito@novacasa.com` · Pepito Pérez, sin acceso | Ninguno | La pestaña no existe | Error: *No tiene acceso a la clase de Apex denominada 'OperatorStatusService'* |
 
 Las capturas de cada usuario están en `docs/evidencia-us208/`: [operadora de Alameda](docs/evidencia-us208/operadora-alameda.png), [operador de Mirador](docs/evidencia-us208/operador-mirador.png), [coordinador](docs/evidencia-us208/coordinador.png) y [sin acceso](docs/evidencia-us208/sin-acceso.png).
 
@@ -215,10 +251,31 @@ Sobre los mismos usuarios, `UserRecordAccess` confirmó que la operadora de Alam
 
 `OperatorAccessTest` cubre lo mismo de forma determinista con usuarios distintos: cada operadora solo ve su edificio, pedir otro por Apex no devuelve nada, la operadora no puede cambiar lecturas ni intervenciones, un campo sin permiso (`Sensor_Id__c`) se rechaza aunque el registro sea visible, solo la administradora lee los errores técnicos, el coordinador ve todo y avanza intervenciones, y un usuario sin permisos recibe el error. `BuildingCodeFlowTest` comprueba que los tres flujos copian el código del edificio.
 
+## Evidencia US-209 (5 de octubre de 2026)
+
+Se publicaron 6 señales controladas (`Source = us-209-evidence`, `msg_us209_*_1791253758`) a la bomba principal de Nova Alameda, en dos tandas:
+
+| Señal | Log | Estado | Qué hacer |
+| --- | --- | --- | --- |
+| Normal, 3 bar | LOG-018339 | Procesada | Nada que hacer. |
+| Equipo que no existe (`AST-BOG-NOEXISTE-209`) | LOG-018340 | Rechazada (`UNKNOWN_ASSET`) | Corregir en Salesforce: registrar el equipo (Asset) con ese código y reintentar. |
+| Unidad equivocada (`PSI`) | LOG-018341 | Rechazada (`INCOMPATIBLE_UNIT`) | No reintentar: el origen debe enviar la unidad correcta. |
+| Sin valor | LOG-018342 | Rechazada (`INCOMPLETE`) | No reintentar: el origen debe reenviar la señal completa. |
+| Reenvío de la normal (mismo `messageId`, otro `deliveryId`) | LOG-018343 | Duplicada | Nada que hacer: el mensaje original ya se procesó. |
+| Lectura de una hora antes, 2.8 bar | LOG-018344 | Atrasada | Nada que hacer: ya hay una lectura más reciente. |
+
+Ninguna abrió intervención, y la lectura vigente de la bomba siguió siendo la de 3 bar. Buscar `msg_us209_normal_1791253758` en el buscador de Salesforce trae sus dos logs, el original y el duplicado. Entrando como Laura, la lista de la traza responde *No tiene acceso a este registro*.
+
+Sobre los 978 logs que había antes, la fórmula dio 467 Procesadas, 407 Atrasadas, 49 Rechazadas, 15 Duplicadas y 40 anteriores a US-202. Ninguno de los 471 textos de error contenía tokens ni contraseñas, y en ningún log la guía contradice a `Retry_Safe__c`.
+
+Capturas en `docs/evidencia-us209/`: [búsqueda por messageId](docs/evidencia-us209/busqueda-por-messageid.png), [lista de rechazadas](docs/evidencia-us209/lista-rechazadas.png), [señal inválida](docs/evidencia-us209/ficha-invalida.png), [señal atrasada](docs/evidencia-us209/ficha-atrasada.png) y [operadora sin acceso](docs/evidencia-us209/operadora-sin-acceso.png).
+
+Las pruebas lo cubren de forma determinista: `SignalLogInvestigationTest` (8 casos: cada estado, que cada motivo tenga su guía y que la guía coincida con `Retry_Safe__c`), `SignalLogSensitiveDataTest` (2) y `OperatorAccessTest.onlyTheAdministratorInvestigatesSignals` (operadora, coordinador y usuario sin acceso no ven la traza; la administradora la lee pero no la edita; solo `Nova_Admin` tiene la pestaña).
+
 ## Decisiones
 
 - **Validar y resolver en la misma transacción, con guardado parcial.** El suscriptor corre Apex A y Apex B sobre todo el lote y guarda con `Database.upsert(logs, false, ...)`. Así una señal inválida no tumba a las válidas (BR-202). No se relanza el lote con `RetryableException`, porque un error de datos fallaría igual en cada reintento y el trigger terminaría suspendido.
-- **Riesgo aceptado: un fallo de guardado solo queda en el debug.** Si el `upsert` de un log falla, el error se registra con `System.debug` (que como *Automated Process* casi no se captura) y ese log se queda en Published. Es poco probable (el objeto es sencillo y la integración tiene FLS), y resolverlo bien pide un objeto o evento de errores aparte; queda para una historia futura.
+- **Riesgo aceptado: un fallo de guardado solo queda en el debug.** Si el `upsert` de un log falla, el error se registra con `System.debug` (que como *Automated Process* casi no se captura) y ese log se queda en Published. Es poco probable (el objeto es sencillo y la integración tiene FLS), y resolverlo bien pide un objeto o evento de errores aparte; queda para una historia futura. Desde US-209 ese log no queda escondido: aparece en la lista *Pendientes de procesar*, aunque sin la causa.
 - **Las comparaciones no distinguen mayúsculas ni espacios.** Los códigos de edificio, equipo, tipo de mensaje, medición y unidad se normalizan antes de comparar, para que un `bar` o un `BAR ` del origen no provoquen un rechazo falso.
 - **La compatibilidad sale de la CMDT, no del código.** La unidad válida de cada medición vive en `Measurement_Threshold__mdt` y se lee con `getAll()` (sin SOQL). Cambiar un umbral no exige redesplegar (BR-204). Además, la medición se compara contra el tipo de equipo guardado en Salesforce, no contra el que trae el mensaje.
 - **Solo una lectura estrictamente más nueva reemplaza el estado (BR-203).** Se compara por `occurredAt`, nunca contra `Datetime.now()`. En empate exacto de `occurredAt` se conserva la lectura actual y la que llega queda Atrasada (Late); así se cumple el KPI de "0 sobrescrituras". La regla vale igual dentro de una colección y entre publicaciones, aunque el bus parta el lote en varias invocaciones del suscriptor.

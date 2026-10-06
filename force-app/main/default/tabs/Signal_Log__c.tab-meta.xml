@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customObject>true</customObject>
+    <description>Traza de cada señal para investigar fallas y decidir si un reintento es seguro (BR-209). Solo la ven quienes tienen Nova_Admin.</description>
+    <motif>Custom55: Magnifying glass</motif>
+</CustomTab>

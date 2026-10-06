@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <compactLayoutAssignment>Signal_Log_Investigation</compactLayoutAssignment>
     <deploymentStatus>Deployed</deploymentStatus>
     <description>Qué pasó con cada señal: publicada en el bus, procesada por el suscriptor o con error de publicación.</description>
     <enableActivities>false</enableActivities>
@@ -18,5 +19,14 @@
         <type>AutoNumber</type>
     </nameField>
     <pluralLabel>Signal Logs</pluralLabel>
+    <searchLayouts>
+        <lookupDialogsAdditionalFields>Message_Id__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Investigation_Status__c</lookupDialogsAdditionalFields>
+        <searchResultsAdditionalFields>Message_Id__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Delivery_Id__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Investigation_Status__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Occurred_At__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Processed_At__c</searchResultsAdditionalFields>
+    </searchLayouts>
     <sharingModel>Private</sharingModel>
 </CustomObject>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Investigation_Status__c</fullName>
+    <description>Resumen para investigar una señal (BR-209): junta la etapa (Status__c), el resultado (Result__c) y el motivo de falla técnica en un solo valor. Las fallas técnicas van aparte de los rechazos de negocio: no son culpa del dato.</description>
+    <externalId>false</externalId>
+    <formula>IF(
+    ISPICKVAL(Status__c, &apos;Publish_Failed&apos;),
+    &apos;Fallida: no se publicó&apos;,
+    IF(
+        ISPICKVAL(Status__c, &apos;Published&apos;),
+        &apos;Pendiente&apos;,
+        IF(
+            ISPICKVAL(Reason__c, &apos;INTERVENTION_FAILED&apos;),
+            &apos;Fallida: no se creó la intervención&apos;,
+            CASE(
+                TEXT(Result__c),
+                &apos;Accepted&apos;, &apos;Procesada&apos;,
+                &apos;Rejected&apos;, &apos;Rechazada&apos;,
+                &apos;Duplicate&apos;, &apos;Duplicada&apos;,
+                &apos;Late&apos;, &apos;Atrasada&apos;,
+                &apos;Procesada sin resultado (anterior a US-202)&apos;
+            )
+        )
+    )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Procesada: aceptada. Rechazada: el dato no sirve, ver el motivo. Duplicada: reenvío de un mensaje ya procesado. Atrasada: más vieja que la lectura vigente. Fallida: un problema técnico, no del dato. Pendiente: publicada y aún sin procesar.</inlineHelpText>
+    <label>Investigation Status</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

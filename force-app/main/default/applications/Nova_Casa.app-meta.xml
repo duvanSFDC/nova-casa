@@ -9,5 +9,7 @@
     <label>Nova Casa</label>
     <navType>Standard</navType>
     <tabs>Estado_Operativo</tabs>
+    <tabs>standard-WorkOrder</tabs>
+    <tabs>Signal_Log__c</tabs>
     <uiType>Lightning</uiType>
 </CustomApplication>

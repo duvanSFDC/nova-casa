@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Retry_Guidance__c</fullName>
+    <description>Qué hacer con la señal antes de reintentarla (BR-209), según su etapa, motivo y resultado. Coincide con Retry_Safe__c en las señales procesadas; en Publish_Failed Retry_Safe__c queda sin marcar porque el publicador no lo llena, y este texto es el que vale.</description>
+    <externalId>false</externalId>
+    <formula>IF(
+    ISPICKVAL(Status__c, &apos;Publish_Failed&apos;),
+    &apos;Seguro reintentar a mano: revisar el error del bus y volver a publicar. El messageId evita duplicados; el cursor ya avanzó, así que no se reintenta sola.&apos;,
+    IF(
+        ISPICKVAL(Status__c, &apos;Published&apos;),
+        &apos;Esperar: el suscriptor aún no la procesa. Si pasan varios minutos, revisar que el trigger no esté suspendido.&apos;,
+        CASE(
+            TEXT(Reason__c),
+            &apos;UNKNOWN_BUILDING&apos;, &apos;Corregir en Salesforce: crear el edificio (Location) con ese código y reintentar.&apos;,
+            &apos;UNKNOWN_ASSET&apos;, &apos;Corregir en Salesforce: registrar el equipo (Asset) con ese código y reintentar.&apos;,
+            &apos;ASSET_NOT_IN_BUILDING&apos;, &apos;Corregir en Salesforce: asignar el equipo a su edificio y reintentar.&apos;,
+            &apos;UNSUPPORTED_MEASUREMENT&apos;, &apos;Corregir en Salesforce: poner el Asset Type del equipo o configurar esa medición en Measurement Threshold y reintentar.&apos;,
+            &apos;THRESHOLD_MISSING&apos;, &apos;Corregir en Salesforce: crear los límites de esa medición en Measurement Threshold y reintentar.&apos;,
+            &apos;THRESHOLD_INCOMPLETE&apos;, &apos;Corregir en Salesforce: completar los límites de esa medición en Measurement Threshold y reintentar.&apos;,
+            &apos;THRESHOLD_CONTRADICTORY&apos;, &apos;Corregir en Salesforce: ordenar la advertencia y el crítico en Measurement Threshold y reintentar.&apos;,
+            &apos;INTERVENTION_FAILED&apos;, &apos;Seguro reintentar: revisar el error del Work Order. El Message_Key__c evita una segunda intervención.&apos;,
+            &apos;INCOMPLETE&apos;, &apos;No reintentar: el origen debe reenviar la señal completa.&apos;,
+            &apos;INCOMPATIBLE_UNIT&apos;, &apos;No reintentar: el origen debe enviar la unidad correcta.&apos;,
+            &apos;UNKNOWN_MESSAGE_TYPE&apos;, &apos;No reintentar: el origen debe enviar un messageType válido.&apos;,
+            &apos;IDENTITY_CONFLICT&apos;, &apos;No reintentar: confirmar con el origen cuál versión del mensaje es la correcta.&apos;,
+            CASE(
+                TEXT(Result__c),
+                &apos;Duplicate&apos;, &apos;Nada que hacer: el mensaje original ya se procesó.&apos;,
+                &apos;Late&apos;, &apos;Nada que hacer: ya hay una lectura más reciente.&apos;,
+                &apos;Nada que hacer.&apos;
+            )
+        )
+    )
+)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <inlineHelpText>Dice si se puede reintentar y, si no, qué hay que corregir primero: en Salesforce (catálogo o límites) o en el origen.</inlineHelpText>
+    <label>Retry Guidance</label>
+    <required>false</required>
+    <trackTrending>false</trackTrending>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>
