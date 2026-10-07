@@ -96,7 +96,8 @@ private class InterventionProcessingTest {
         Assert.areEqual(bogId, order.LocationId, 'Lleva el edificio');
         Assert.areEqual('Critical', order.Priority, 'Severidad crítica');
         Assert.areEqual('New', order.Status, 'Estado de seguimiento inicial');
-        Assert.isTrue(order.Subject != null && order.Subject.contains('Bomba principal'), 'La causa menciona el equipo por su nombre: ' + order.Subject);
+        Assert.isTrue(order.Subject != null && order.Subject.contains('Presión de agua'), 'La causa describe la medición de forma legible: ' + order.Subject);
+        Assert.isTrue(!order.Subject.contains(PUMP), 'La causa no repite el código del equipo (el activo ya es columna): ' + order.Subject);
 
         Signal_Log__c log = logsByDelivery().get('dlv_c1');
         Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, log.Result__c);
@@ -253,7 +254,7 @@ private class InterventionProcessingTest {
         Integer dml = Limits.getDmlStatements() - dmlBefore;
         Test.stopTest();
 
-        Assert.areEqual(7, queries, 'Logs, edificios, equipos, identidad, condiciones, intervenciones y nombres de equipo: una consulta cada uno');
+        Assert.areEqual(6, queries, 'Logs, edificios, equipos, identidad, condiciones e intervenciones: una consulta cada uno');
         Assert.areEqual(3, dml, 'Un upsert de condiciones, un insert de intervención y un upsert de logs');
         // Solo la más reciente queda vigente y abre intervención; las demás, atrasadas.
         Assert.areEqual(1, workOrders().size(), 'La recencia deja una sola crítica vigente por activo+tipo');

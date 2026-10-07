@@ -48,28 +48,16 @@ public inherited sharing class InterventionService {
         Map<String, Id> workOrderIdByKey = existingWorkOrders(indexByMessageId.keySet());
 
         // 3. Reutilizar las que existen; preparar la creación de las nuevas.
+        List<WorkOrder> toInsert = new List<WorkOrder>();
         List<Integer> insertPositions = new List<Integer>();
-        List<String> insertMessageIds = new List<String>();
-        Set<Id> newAssetIds = new Set<Id>();
         for (String messageId : indexByMessageId.keySet()) {
             Integer i = indexByMessageId.get(messageId);
             if (workOrderIdByKey.containsKey(messageId)) {
                 outcomes[i].withWorkOrder(workOrderIdByKey.get(messageId));
             } else {
+                toInsert.add(buildWorkOrder(messageId, outcomes[i], events[i]));
                 insertPositions.add(i);
-                insertMessageIds.add(messageId);
-                if (outcomes[i].assetId != null) {
-                    newAssetIds.add(outcomes[i].assetId);
-                }
             }
-        }
-
-        // El nombre del equipo hace legible la causa (no el código del simulador).
-        Map<Id, String> assetNameById = assetNames(newAssetIds);
-        List<WorkOrder> toInsert = new List<WorkOrder>();
-        for (Integer k = 0; k < insertPositions.size(); k++) {
-            Integer i = insertPositions[k];
-            toInsert.add(buildWorkOrder(insertMessageIds[k], outcomes[i], events[i], assetNameById));
         }
 
         createInterventions(toInsert, insertPositions, events, outcomes);
@@ -114,48 +102,30 @@ public inherited sharing class InterventionService {
         return byKey;
     }
 
-    private static WorkOrder buildWorkOrder(
-        String messageId,
-        TelemetrySignalOutcome outcome,
-        Telemetry_Signal__e evt,
-        Map<Id, String> assetNameById
-    ) {
+    private static WorkOrder buildWorkOrder(String messageId, TelemetrySignalOutcome outcome, Telemetry_Signal__e evt) {
         return new WorkOrder(
             Message_Key__c = messageId,
             AssetId = outcome.assetId,
             LocationId = outcome.locationId,
             Status = STATUS_NEW,
             Priority = PRIORITY_CRITICAL,
-            Subject = cause(evt, assetNameById.get(outcome.assetId))
+            Subject = cause(evt)
         );
     }
 
-    /** Nombres de los equipos que abrirán intervención, en una sola consulta. */
-    private static Map<Id, String> assetNames(Set<Id> assetIds) {
-        Map<Id, String> names = new Map<Id, String>();
-        if (assetIds.isEmpty()) {
-            return names;
-        }
-        for (Asset equipment : [SELECT Id, Name FROM Asset WHERE Id IN :assetIds WITH SYSTEM_MODE]) {
-            names.put(equipment.Id, equipment.Name);
-        }
-        return names;
-    }
-
     /**
-     * Causa legible para la persona: "Crítico · Temperatura 35 °C · Ventilación".
-     * Usa los nombres amigables de MeasurementLabels y el nombre del equipo; si no hay
-     * nombre a mano, cae al código del simulador.
+     * Causa legible: "Crítico · Temperatura 35 °C". No incluye el equipo porque el activo
+     * y el edificio ya se ven como columnas de la intervención (sería redundante). Usa los
+     * nombres amigables de MeasurementLabels.
      */
-    private static String cause(Telemetry_Signal__e evt, String assetName) {
+    private static String cause(Telemetry_Signal__e evt) {
         String measurement = capitalize(MeasurementLabels.typeLabel(evt.Measurement_Type__c));
         String unit = MeasurementLabels.unitLabel(evt.Measurement_Unit__c);
         String reading = measurement + ' ' + formatValue(evt.Measurement_Value__c);
         if (String.isNotBlank(unit)) {
             reading += ' ' + unit;
         }
-        String equipment = String.isNotBlank(assetName) ? assetName : evt.Asset_Id__c;
-        return ('Crítico · ' + reading + ' · ' + equipment).abbreviate(SUBJECT_MAX);
+        return ('Crítico · ' + reading).abbreviate(SUBJECT_MAX);
     }
 
     /** El valor sin ceros de relleno: 35.0000 -> 35, 0.8000 -> 0.8. */

@@ -315,10 +315,9 @@ private class TelemetrySignalProcessingTest {
         List<Integer> costOf200 = cost(full);
         Test.stopTest();
 
-        // 7 consultas (logs, edificios, equipos, identidad, condiciones, intervenciones y nombres de
-        // equipo para la causa) y 3 escrituras (condiciones, intervención y logs): ambos lotes traen
-        // una crítica, así que abren intervención. El costo no depende del tamaño del lote.
-        Assert.areEqual(new List<Integer>{ 7, 3 }, costOfOne, 'Costo fijo por lote');
+        // 6 consultas (logs, edificios, equipos, identidad, condiciones e intervenciones) y 3 escrituras
+        // (condiciones, intervención y logs): ambos lotes traen una crítica, así que abren intervención.
+        Assert.areEqual(new List<Integer>{ 6, 3 }, costOfOne, 'Costo fijo por lote');
         Assert.areEqual(costOfOne, costOf200, 'El costo no crece con el tamaño del lote');
         Assert.areEqual(201, [SELECT COUNT() FROM Signal_Log__c WITH SYSTEM_MODE]);
         // De las 200 de energía, solo la más reciente queda como estado actual; el resto, Late.
