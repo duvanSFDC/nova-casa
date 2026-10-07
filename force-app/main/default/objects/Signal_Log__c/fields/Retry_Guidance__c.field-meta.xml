@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Retry_Guidance__c</fullName>
-    <description>Qué hacer con la señal antes de reintentarla (BR-209), según su etapa, motivo y resultado. Coincide con Retry_Safe__c en las señales procesadas; en Publish_Failed Retry_Safe__c queda sin marcar porque el publicador no lo llena, y este texto es el que vale.</description>
+    <description>Qué hacer con la señal antes de reintentarla (BR-209), según su etapa, motivo y resultado. Acompaña a Retry_Safe__c (que indica cuándo un reintento es seguro, tanto en las señales procesadas como en Publish_Failed) explicando qué corregir primero o por qué no reintentar.</description>
     <externalId>false</externalId>
     <formula>IF(
     ISPICKVAL(Status__c, &apos;Publish_Failed&apos;),
