@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
-    <formFactors>Small</formFactors>
+    <brand>
+        <headerColor>#D07E43</headerColor>
+        <logo>novacasaisotipo</logo>
+        <logoVersion>1</logoVersion>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
     <formFactors>Large</formFactors>
     <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
     <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
@@ -8,6 +13,8 @@
     <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
     <label>Nova Casa</label>
     <navType>Standard</navType>
+    <setupExperience>all</setupExperience>
+    <tabs>standard-home</tabs>
     <tabs>Estado_Operativo</tabs>
     <tabs>standard-WorkOrder</tabs>
     <tabs>Signal_Log__c</tabs>

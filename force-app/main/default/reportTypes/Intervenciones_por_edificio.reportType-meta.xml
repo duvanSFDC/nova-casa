@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ReportType xmlns="http://soap.sforce.com/2006/04/metadata">
+    <baseObject>WorkOrder</baseObject>
+    <category>other</category>
+    <deployed>true</deployed>
+    <description>Intervenciones (Work Orders) con su edificio, para que el gerente regional vea qué edificios concentran situaciones graves.</description>
+    <label>Intervenciones por edificio</label>
+    <sections>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Building_Code__c</field>
+            <table>WorkOrder</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Subject</field>
+            <table>WorkOrder</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Priority</field>
+            <table>WorkOrder</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>Status</field>
+            <table>WorkOrder</table>
+        </columns>
+        <columns>
+            <checkedByDefault>true</checkedByDefault>
+            <field>CreatedDate</field>
+            <table>WorkOrder</table>
+        </columns>
+        <columns>
+            <checkedByDefault>false</checkedByDefault>
+            <field>Location</field>
+            <table>WorkOrder</table>
+        </columns>
+        <masterLabel>Intervenciones</masterLabel>
+    </sections>
+</ReportType>
