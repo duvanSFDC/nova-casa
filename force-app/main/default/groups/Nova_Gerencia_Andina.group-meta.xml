@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Group xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Gerencia regional - Región Andina (edificio Nova Alameda, BLD-BOG-001). Solo lectura de su región.</description>
+    <doesIncludeBosses>false</doesIncludeBosses>
+    <name>Nova Gerencia Andina</name>
+</Group>

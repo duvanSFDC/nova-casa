@@ -56,4 +56,32 @@
         </criteriaItems>
         <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
     </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Nova_Gerencia_Andina</fullName>
+        <accessLevel>Read</accessLevel>
+        <label>Nova gerencia Andina</label>
+        <sharedTo>
+            <group>Nova_Gerencia_Andina</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Building_Code__c</field>
+            <operation>equals</operation>
+            <value>BLD-BOG-001</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
+    <sharingCriteriaRules>
+        <fullName>Nova_Gerencia_Caribe</fullName>
+        <accessLevel>Read</accessLevel>
+        <label>Nova gerencia Caribe</label>
+        <sharedTo>
+            <group>Nova_Gerencia_Caribe</group>
+        </sharedTo>
+        <criteriaItems>
+            <field>Building_Code__c</field>
+            <operation>equals</operation>
+            <value>BLD-BAQ-001</value>
+        </criteriaItems>
+        <includeRecordsOwnedByAll>true</includeRecordsOwnedByAll>
+    </sharingCriteriaRules>
 </SharingRules>

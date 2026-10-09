@@ -1,4 +1,4 @@
-import { LightningElement } from 'lwc';
+import { LightningElement, api } from 'lwc';
 import TIME_ZONE from '@salesforce/i18n/timeZone';
 import getAssets from '@salesforce/apex/OperatorStatusService.getAssets';
 import getBuildings from '@salesforce/apex/OperatorStatusService.getBuildings';
@@ -65,6 +65,12 @@ const DATE_FORMAT = new Intl.DateTimeFormat('es', {
 });
 
 export default class OperatorStatus extends LightningElement {
+    // Opciones de diseño (App Builder): en el inicio se usan para enfocar la vista.
+    // urgentOnly: muestra solo activos en Crítico o Advertencia (lo que necesita atención).
+    // showSummary: muestra arriba los contadores (críticos, advertencias, sin lectura).
+    @api urgentOnly = false;
+    @api showSummary = false;
+
     columns = COLUMNS;
     severityOptions = SEVERITY_OPTIONS;
     buildingOptions = [{ label: 'Todos los edificios', value: '' }];
@@ -72,6 +78,8 @@ export default class OperatorStatus extends LightningElement {
     severity = '';
     state = 'loading';
     tableRows = [];
+    allRows = [];
+    summary = { criticals: 0, warnings: 0, noReading: 0 };
     consultedAtLabel = '';
     errorMessage = 'No pudimos consultar los equipos.';
 
@@ -115,6 +123,19 @@ export default class OperatorStatus extends LightningElement {
         return this.isLoading || !this.hasActiveFilters;
     }
 
+    // En el inicio enfocado (urgentOnly) ocultamos los filtros: es una vista "solo lo urgente".
+    get showFilters() {
+        return !this.urgentOnly;
+    }
+
+    get showSummaryBar() {
+        return this.showSummary && (this.isData || this.isEmpty);
+    }
+
+    get cardTitle() {
+        return this.urgentOnly ? 'Lo que necesita atención' : 'Estado operativo';
+    }
+
     handleRefresh() {
         this.load();
     }
@@ -153,8 +174,13 @@ export default class OperatorStatus extends LightningElement {
                 }))
             ];
             const rows = result.rows || [];
+            this.allRows = rows;
             this.consultedAtLabel = formatWhen(result.consultedAt);
-            this.tableRows = rows.map(toTableRow);
+            // El resumen cuenta sobre el total (no sobre la vista filtrada): es el panorama.
+            this.summary = computeSummary(rows);
+            // En el inicio enfocado mostramos solo lo urgente (crítico/advertencia).
+            const visible = this.urgentOnly ? rows.filter(isUrgentAsset) : rows;
+            this.tableRows = visible.map(toTableRow);
             this.state = this.tableRows.length ? 'data' : 'empty';
         } catch (error) {
             this.tableRows = [];
@@ -193,6 +219,31 @@ export function toTableRow(row) {
         severityClass: severity.cellClass,
         occurredAtLabel: formatWhen(row.occurredAt)
     };
+}
+
+export function isUrgentAsset(row) {
+    return row.assetSeverity === 'Critical' || row.assetSeverity === 'Warning';
+}
+
+export function computeSummary(rows) {
+    const severityByAsset = new Map();
+    let noReading = 0;
+    for (const row of rows) {
+        severityByAsset.set(row.assetId, row.assetSeverity);
+        if (!row.hasReading) {
+            noReading += 1;
+        }
+    }
+    let criticals = 0;
+    let warnings = 0;
+    for (const severity of severityByAsset.values()) {
+        if (severity === 'Critical') {
+            criticals += 1;
+        } else if (severity === 'Warning') {
+            warnings += 1;
+        }
+    }
+    return { criticals, warnings, noReading };
 }
 
 function readingLabel(row) {
