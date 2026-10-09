@@ -1,5 +1,5 @@
 import { createElement } from 'lwc';
-import OperatorStatus from 'c/operatorStatus';
+import OperatorStatus, { computeSummary, isUrgentAsset } from 'c/operatorStatus';
 import getAssets from '@salesforce/apex/OperatorStatusService.getAssets';
 import getBuildings from '@salesforce/apex/OperatorStatusService.getBuildings';
 
@@ -71,10 +71,11 @@ const ROWS = [
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-async function render() {
+async function render(props = {}) {
     getBuildings.mockResolvedValue([]);
     getAssets.mockResolvedValue({ consultedAt: '2026-10-05T15:01:00.000Z', rows: ROWS });
     const element = createElement('c-operator-status', { is: OperatorStatus });
+    Object.assign(element, props);
     document.body.appendChild(element);
     await flush();
     return element;
@@ -139,5 +140,52 @@ describe('c-operator-status', () => {
             severityLabel: '—'
         });
         expect(rows[4].assetSeverityIcon).toBeUndefined();
+    });
+
+    it('en el inicio enfocado (urgentOnly) muestra solo activos críticos o en advertencia y oculta los filtros', async () => {
+        const element = await render({ urgentOnly: true });
+        const rows = tableRows(element);
+        expect(rows.map((row) => row.rowKey)).toEqual(['c1', 'c2']);
+        expect(element.shadowRoot.querySelector('lightning-combobox')).toBeNull();
+    });
+
+    it('con showSummary muestra los contadores sobre el total, no sobre la vista filtrada', async () => {
+        const element = await render({ urgentOnly: true, showSummary: true });
+        const headings = Array.from(
+            element.shadowRoot.querySelectorAll('.slds-text-heading_large')
+        ).map((node) => node.textContent.trim());
+        // Críticos = 1 (un activo), Advertencias = 0, Sin lectura = 1 (sobre los 4 activos del total)
+        expect(headings).toEqual(['1', '0', '1']);
+    });
+});
+
+describe('computeSummary', () => {
+    it('cuenta activos (no filas) por estado y las filas sin lectura', () => {
+        expect(computeSummary(ROWS)).toEqual({ criticals: 1, warnings: 0, noReading: 1 });
+    });
+
+    it('no duplica un activo con varias lecturas', () => {
+        const summary = computeSummary([
+            { assetId: 'a', assetSeverity: 'Warning', hasReading: true },
+            { assetId: 'a', assetSeverity: 'Warning', hasReading: true },
+            { assetId: 'b', assetSeverity: 'Critical', hasReading: true }
+        ]);
+        expect(summary).toEqual({ criticals: 1, warnings: 1, noReading: 0 });
+    });
+
+    it('con una lista vacía devuelve ceros', () => {
+        expect(computeSummary([])).toEqual({ criticals: 0, warnings: 0, noReading: 0 });
+    });
+});
+
+describe('isUrgentAsset', () => {
+    it('es urgente cuando el activo está en crítico o advertencia', () => {
+        expect(isUrgentAsset({ assetSeverity: 'Critical' })).toBe(true);
+        expect(isUrgentAsset({ assetSeverity: 'Warning' })).toBe(true);
+    });
+
+    it('no es urgente cuando el activo está normal o sin estado', () => {
+        expect(isUrgentAsset({ assetSeverity: 'Normal' })).toBe(false);
+        expect(isUrgentAsset({})).toBe(false);
     });
 });

@@ -7,7 +7,12 @@
     </folderShares>
     <folderShares>
         <accessLevel>View</accessLevel>
-        <sharedTo>Nova_Gerencia</sharedTo>
+        <sharedTo>Nova_Gerencia_Andina</sharedTo>
+        <sharedToType>Group</sharedToType>
+    </folderShares>
+    <folderShares>
+        <accessLevel>View</accessLevel>
+        <sharedTo>Nova_Gerencia_Caribe</sharedTo>
         <sharedToType>Group</sharedToType>
     </folderShares>
     <name>Nova Casa - Operación</name>
