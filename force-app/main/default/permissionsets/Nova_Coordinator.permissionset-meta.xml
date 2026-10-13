@@ -12,10 +12,6 @@
         <apexClass>OperatorStatusService</apexClass>
         <enabled>true</enabled>
     </classAccesses>
-    <customMetadataTypeAccesses>
-        <enabled>true</enabled>
-        <name>Measurement_Threshold__mdt</name>
-    </customMetadataTypeAccesses>
     <description>Coordinación (Javier): lee edificios, activos y lecturas; avanza y cierra intervenciones; ajusta solo los dos límites de los umbrales (Alert_Threshold__c), sin crearlos ni borrarlos. Qué edificios ve lo deciden las reglas de compartición (BR-208).</description>
     <fieldPermissions>
         <editable>false</editable>

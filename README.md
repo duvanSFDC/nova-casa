@@ -40,6 +40,7 @@ Cada log guarda cuatro horas por separado:
 - `platformEventSubscriberConfigs/TelemetrySignalTriggerConfig`: hace que el suscriptor reciba hasta 200 eventos por invocación.
 - `classes/OperatorStatusService` y `lwc/operatorStatus`: la pantalla *Estado operativo* de Laura (lecturas vigentes, estado del activo e intervención abierta). `permissionsets/Nova_Operator`: el acceso de Laura a esa pantalla.
 - `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta. `permissionsets/Nova_Admin`: acceso de solo lectura a la traza para Camila. `permissionsets/Nova_Coordinator`: el acceso de Javier (lee y avanza intervenciones, y ajusta los límites de los umbrales).
+- `applications/Nova_Casa`: la app, con sus pestañas, el inicio `flexipages/Nova_Casa_Home` y la ficha de activo `flexipages/Asset_Record_Page`.
 - `groups/` (un grupo por edificio y `Nova_Coordination`), `sharingRules/` y los flujos `Asset_Building_Code`, `Asset_Condition_Building_Code` y `Work_Order_Building_Code`, que copian el código del edificio a `Building_Code__c`: quién ve qué edificio (BR-208).
 
 ## Matriz de acceso (BR-208)
