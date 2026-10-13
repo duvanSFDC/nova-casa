@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <allowInChatterGroups>false</allowInChatterGroups>
+    <compactLayoutAssignment>SYSTEM</compactLayoutAssignment>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Qué medición acepta cada tipo de equipo, en qué unidad y desde qué valores es Advertencia o Crítico. Un registro por tipo de equipo y tipo de medición. Es un objeto y no Custom Metadata para que la coordinación edite los límites con un permiso de objeto, sin Customize Application ni permisos de metadata. Los campos no son obligatorios a nivel de campo, porque un campo obligatorio lo puede editar cualquiera que edite el registro; las reglas de validación exigen los valores.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>false</enableBulkApi>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableLicensing>false</enableLicensing>
+    <enableReports>true</enableReports>
+    <enableSearch>false</enableSearch>
+    <enableSharing>false</enableSharing>
+    <enableStreamingApi>false</enableStreamingApi>
+    <externalSharingModel>Private</externalSharingModel>
+    <label>Alert Threshold</label>
+    <nameField>
+        <displayFormat>UMB-{0000}</displayFormat>
+        <label>Threshold Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Alert Thresholds</pluralLabel>
+    <searchLayouts></searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

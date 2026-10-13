@@ -47,7 +47,7 @@ public inherited sharing class TelemetrySignalOutcome {
     }
 
     /**
-     * retrySafe es verdadero cuando el rechazo se corrige en Salesforce (el catálogo o la CMDT)
+     * retrySafe es verdadero cuando el rechazo se corrige en Salesforce (el catálogo o los umbrales)
      * y falso cuando el dato de origen está mal y reprocesarlo daría lo mismo.
      */
     public static TelemetrySignalOutcome rejected(String reason, String detail, Boolean retrySafe) {

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Threshold_Key__c</fullName>
+    <caseSensitive>false</caseSensitive>
+    <description>Tipo de equipo y tipo de medición en mayúsculas, separados por |, por ejemplo WATER_PUMP|WATER_PRESSURE. Es único, así que no puede haber dos registros para la misma combinación. La regla Key_Matches_Types exige que coincida con los dos campos.</description>
+    <externalId>true</externalId>
+    <inlineHelpText>Tipo de equipo|tipo de medición en mayúsculas, por ejemplo WATER_PUMP|WATER_PRESSURE.</inlineHelpText>
+    <label>Threshold Key</label>
+    <length>81</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

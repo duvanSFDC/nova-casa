@@ -32,8 +32,8 @@ private class TelemetryStateProcessingTest {
 
     /** Unidades y límites de ejemplo. Los límites hacen que los valores de estas pruebas clasifiquen Normal. */
     private static void useCatalog() {
-        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(
+        List<Alert_Threshold__c> records = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(
                 Asset_Type__c = 'WATER_PUMP',
                 Measurement_Type__c = 'WATER_PRESSURE',
                 Unit__c = 'BAR',
@@ -41,7 +41,7 @@ private class TelemetryStateProcessingTest {
                 Warning_Limit__c = 0.3,
                 Critical_Limit__c = 0.1
             ),
-            new Measurement_Threshold__mdt(
+            new Alert_Threshold__c(
                 Asset_Type__c = 'ENERGY_METER',
                 Measurement_Type__c = 'ENERGY_CONSUMPTION',
                 Unit__c = 'KWH_PER_15_MIN',
@@ -50,8 +50,7 @@ private class TelemetryStateProcessingTest {
                 Critical_Limit__c = 200
             )
         };
-        MeasurementCatalog.testRecords = records;
-        MeasurementSeverityClassifier.testRecords = records;
+        AlertThresholdTestData.save(records);
     }
 
     private static Telemetry_Signal__e pressure(String key, Decimal value, Datetime occurredAt) {
@@ -194,8 +193,8 @@ private class TelemetryStateProcessingTest {
     @IsTest
     static void lateCriticalDoesNotOverwriteNorOpenWork() {
         // Límites donde una presión baja es crítica (Below): <= 1.0 bar es Critical.
-        List<Measurement_Threshold__mdt> limits = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(
+        List<Alert_Threshold__c> limits = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(
                 Asset_Type__c = 'WATER_PUMP',
                 Measurement_Type__c = 'WATER_PRESSURE',
                 Unit__c = 'BAR',
@@ -291,9 +290,9 @@ private class TelemetryStateProcessingTest {
         Integer dml = Limits.getDmlStatements() - dmlBefore;
         Test.stopTest();
 
-        // Logs, edificios, equipos, identidad (US-205) y condiciones: una consulta cada uno.
+        // Logs, edificios, equipos, umbrales, identidad (US-205) y condiciones: una consulta cada uno.
         // Sin críticas no se abren intervenciones, así que no hay consulta ni insert de Work Order.
-        Assert.areEqual(5, queries, 'Una consulta por paso del lote, no por señal');
+        Assert.areEqual(6, queries, 'Una consulta por paso del lote, no por señal');
         Assert.areEqual(2, dml, 'Un upsert de condiciones y uno de logs');
         Asset_Condition__c current = conditionFor('WATER_PRESSURE');
         Assert.areEqual(T1.addSeconds(199), current.Occurred_At__c, 'Queda la más reciente de las 200');

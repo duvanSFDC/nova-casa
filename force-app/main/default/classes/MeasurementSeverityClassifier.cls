@@ -1,7 +1,8 @@
 /**
  * BR-204: decide Normal, Warning o Critical comparando la lectura con los límites vigentes
- * de Measurement_Threshold__mdt. getAll() no gasta consultas SOQL, así que leer los límites
- * cuesta lo mismo para 1 señal que para 200. Los códigos se comparan sin distinguir mayúsculas.
+ * de Alert_Threshold__c. Los lee AlertThresholds con una consulta por transacción, así que
+ * leer los límites cuesta lo mismo para 1 señal que para 200. Los códigos se comparan sin
+ * distinguir mayúsculas.
  *
  * El valor exacto de un límite pertenece a la banda de ese límite:
  * Above: >= crítico es Critical; >= advertencia es Warning; lo demás es Normal.
@@ -25,23 +26,23 @@ public inherited sharing class MeasurementSeverityClassifier {
     private static final Integer DETAIL_MAX = 255;
 
     @TestVisible
-    private static List<Measurement_Threshold__mdt> testRecords;
+    private static List<Alert_Threshold__c> testRecords;
 
-    private final Map<String, Measurement_Threshold__mdt> thresholdByKey = new Map<String, Measurement_Threshold__mdt>();
+    private final Map<String, Alert_Threshold__c> thresholdByKey = new Map<String, Alert_Threshold__c>();
 
     public static MeasurementSeverityClassifier load() {
-        return new MeasurementSeverityClassifier(testRecords != null ? testRecords : Measurement_Threshold__mdt.getAll().values());
+        return new MeasurementSeverityClassifier(testRecords != null ? testRecords : AlertThresholds.all());
     }
 
-    private MeasurementSeverityClassifier(List<Measurement_Threshold__mdt> records) {
-        for (Measurement_Threshold__mdt record : records) {
+    private MeasurementSeverityClassifier(List<Alert_Threshold__c> records) {
+        for (Alert_Threshold__c record : records) {
             thresholdByKey.put(key(record.Asset_Type__c, record.Measurement_Type__c), record);
         }
     }
 
     /** La lectura tiene que venir ya validada: con valor, y con una unidad que el catálogo aceptó. */
     public Classification classify(String assetType, String measurementType, Decimal value) {
-        Measurement_Threshold__mdt threshold = thresholdByKey.get(key(assetType, measurementType));
+        Alert_Threshold__c threshold = thresholdByKey.get(key(assetType, measurementType));
         String subject = '"' + measurementType + '" de "' + assetType + '"';
 
         if (threshold == null) {

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Severity__c</fullName>
-    <description>Severidad de una medición aceptada, según los límites de Measurement_Threshold__mdt vigentes cuando se procesó. Vacío en rechazos y en señales de conectividad. Cambiar un límite después no la modifica.</description>
+    <description>Severidad de una medición aceptada, según los límites de Alert_Threshold__c vigentes cuando se procesó. Vacío en rechazos y en señales de conectividad. Cambiar un límite después no la modifica.</description>
     <inlineHelpText>Normal, Advertencia o Crítico con los límites vigentes al procesar la señal.</inlineHelpText>
     <label>Severity</label>
     <required>false</required>

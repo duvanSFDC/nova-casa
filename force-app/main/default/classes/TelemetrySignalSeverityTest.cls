@@ -19,8 +19,8 @@ private class TelemetrySignalSeverityTest {
     }
 
     private static void usePumpLimits(String direction, Decimal warning, Decimal critical) {
-        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(
+        List<Alert_Threshold__c> records = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(
                 Asset_Type__c = 'WATER_PUMP',
                 Measurement_Type__c = 'WATER_PRESSURE',
                 Unit__c = 'BAR',
@@ -137,7 +137,7 @@ private class TelemetrySignalSeverityTest {
         Signal_Log__c contradictory = logs.get('dlv_contradictory');
         Assert.areEqual(TelemetrySignalOutcome.RESULT_REJECTED, contradictory.Result__c);
         Assert.areEqual(TelemetrySignalOutcome.REASON_THRESHOLD_CONTRADICTORY, contradictory.Reason__c);
-        Assert.isTrue(contradictory.Retry_Safe__c, 'Se corrige en la CMDT: reprocesar después sí sirve.');
+        Assert.isTrue(contradictory.Retry_Safe__c, 'Se corrige en el umbral: reprocesar después sí sirve.');
         Assert.isNull(contradictory.Severity__c, 'Sin límites válidos no se guarda Normal.');
         Assert.isTrue(contradictory.Error__c.contains('contradictorios'), contradictory.Error__c);
         Assert.areEqual(PUMP, contradictory.Asset__r.External_Id__c, 'Se enlaza lo que sí se reconoció.');

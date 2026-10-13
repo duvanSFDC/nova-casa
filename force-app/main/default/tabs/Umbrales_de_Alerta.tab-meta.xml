@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Pantalla de la coordinación para ajustar los límites de advertencia y crítico de los umbrales.</description>
+    <label>Umbrales de alerta</label>
+    <lwcComponent>alertThresholdEditor</lwcComponent>
+    <motif>Custom9: Lightning</motif>
+</CustomTab>
