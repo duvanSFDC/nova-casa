@@ -36,10 +36,10 @@ private class TelemetrySignalProcessingTest {
         return new Asset(Name = name, External_Id__c = code, Asset_Type__c = type, LocationId = locationId, AccountId = accountId);
     }
 
-    /** Mismas unidades y límites de ejemplo que la CMDT desplegada, para no depender de que alguien la edite. */
+    /** Mismas unidades y límites de ejemplo que los umbrales iniciales, para no depender de que alguien los edite. */
     private static void useCatalog() {
-        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(
+        List<Alert_Threshold__c> records = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(
                 Asset_Type__c = 'WATER_PUMP',
                 Measurement_Type__c = 'WATER_PRESSURE',
                 Unit__c = 'BAR',
@@ -47,7 +47,7 @@ private class TelemetrySignalProcessingTest {
                 Warning_Limit__c = 1.5,
                 Critical_Limit__c = 1.0
             ),
-            new Measurement_Threshold__mdt(
+            new Alert_Threshold__c(
                 Asset_Type__c = 'ENERGY_METER',
                 Measurement_Type__c = 'ENERGY_CONSUMPTION',
                 Unit__c = 'KWH_PER_15_MIN',
@@ -56,8 +56,7 @@ private class TelemetrySignalProcessingTest {
                 Critical_Limit__c = 60
             )
         };
-        MeasurementCatalog.testRecords = records;
-        MeasurementSeverityClassifier.testRecords = records;
+        AlertThresholdTestData.save(records);
     }
 
     private static Telemetry_Signal__e measurement(String key, String buildingCode, String assetCode, String type, Decimal value, String unit) {
@@ -315,9 +314,9 @@ private class TelemetrySignalProcessingTest {
         List<Integer> costOf200 = cost(full);
         Test.stopTest();
 
-        // 6 consultas (logs, edificios, equipos, identidad, condiciones e intervenciones) y 3 escrituras
+        // 7 consultas (logs, edificios, equipos, umbrales, identidad, condiciones e intervenciones) y 3 escrituras
         // (condiciones, intervención y logs): ambos lotes traen una crítica, así que abren intervención.
-        Assert.areEqual(new List<Integer>{ 6, 3 }, costOfOne, 'Costo fijo por lote');
+        Assert.areEqual(new List<Integer>{ 7, 3 }, costOfOne, 'Costo fijo por lote');
         Assert.areEqual(costOfOne, costOf200, 'El costo no crece con el tamaño del lote');
         Assert.areEqual(201, [SELECT COUNT() FROM Signal_Log__c WITH SYSTEM_MODE]);
         // De las 200 de energía, solo la más reciente queda como estado actual; el resto, Late.
@@ -334,6 +333,7 @@ private class TelemetrySignalProcessingTest {
 
     /** Consultas y escrituras que gasta el suscriptor con ese lote. */
     private static List<Integer> cost(List<Telemetry_Signal__e> events) {
+        AlertThresholds.forget();
         Integer queriesBefore = Limits.getQueries();
         Integer dmlBefore = Limits.getDmlStatements();
         TelemetrySignalSubscriber.handle(events);
@@ -341,14 +341,20 @@ private class TelemetrySignalProcessingTest {
     }
 
     @IsTest
-    static void catalogReadsDeployedThresholds() {
-        // Sin inyectar testRecords: se lee la Measurement_Threshold__mdt real desplegada.
+    static void catalogReadsSavedThresholds() {
+        // Sin inyectar testRecords: se leen los Alert_Threshold__c guardados.
+        AlertThresholdTestData.save(
+            new List<Alert_Threshold__c>{
+                new Alert_Threshold__c(Asset_Type__c = 'WATER_PUMP', Measurement_Type__c = 'WATER_PRESSURE', Unit__c = 'BAR',
+                    Alert_Direction__c = 'Below', Warning_Limit__c = 1.5, Critical_Limit__c = 1.0),
+                new Alert_Threshold__c(Asset_Type__c = 'ENERGY_METER', Measurement_Type__c = 'ENERGY_CONSUMPTION', Unit__c = 'KWH_PER_15_MIN',
+                    Alert_Direction__c = 'Above', Warning_Limit__c = 40, Critical_Limit__c = 60)
+            }
+        );
         MeasurementCatalog catalog = MeasurementCatalog.load();
 
         Assert.areEqual('BAR', catalog.unitFor('WATER_PUMP', 'WATER_PRESSURE'));
         Assert.areEqual('KWH_PER_15_MIN', catalog.unitFor('ENERGY_METER', 'ENERGY_CONSUMPTION'));
-        Assert.areEqual('CELSIUS', catalog.unitFor('TECHNICAL_ROOM', 'TEMPERATURE'));
-        Assert.areEqual('LITER_PER_15_MIN', catalog.unitFor('WATER_METER', 'WATER_CONSUMPTION'));
         Assert.areEqual('BAR', catalog.unitFor('water_pump', 'water_pressure'), 'La búsqueda no distingue mayúsculas');
         Assert.isNull(catalog.unitFor('WATER_PUMP', 'TEMPERATURE'), 'Combinación no configurada');
     }
@@ -383,8 +389,8 @@ private class TelemetrySignalProcessingTest {
 
     @IsTest
     static void compatibilityComesFromTheCatalogNotFromTheCode() {
-        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(
+        MeasurementSeverityClassifier.testRecords = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(
                 Asset_Type__c = 'WATER_PUMP',
                 Measurement_Type__c = 'WATER_PRESSURE',
                 Alert_Direction__c = 'Below',
@@ -392,14 +398,14 @@ private class TelemetrySignalProcessingTest {
                 Critical_Limit__c = 1.0
             )
         };
-        MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>();
+        MeasurementCatalog.testRecords = new List<Alert_Threshold__c>();
         List<Telemetry_Signal__e> events = new List<Telemetry_Signal__e>{ measurement('no-catalog', BOG, PUMP, 'WATER_PRESSURE', 0.7, 'BAR') };
 
         TelemetrySignalOutcome withoutRow = TelemetrySignalProcessor.process(events)[0];
-        Assert.areEqual(TelemetrySignalOutcome.REASON_UNSUPPORTED_MEASUREMENT, withoutRow.reason, 'Sin registro en la CMDT no se acepta');
+        Assert.areEqual(TelemetrySignalOutcome.REASON_UNSUPPORTED_MEASUREMENT, withoutRow.reason, 'Sin umbral guardado no se acepta');
 
-        MeasurementCatalog.testRecords = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(Asset_Type__c = 'water_pump', Measurement_Type__c = 'Water_Pressure', Unit__c = 'BAR')
+        MeasurementCatalog.testRecords = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(Asset_Type__c = 'water_pump', Measurement_Type__c = 'Water_Pressure', Unit__c = 'BAR')
         };
         TelemetrySignalOutcome withRow = TelemetrySignalProcessor.process(events)[0];
         Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, withRow.result, 'Al agregar el registro se acepta, sin cambiar código');

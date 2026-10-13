@@ -3,11 +3,10 @@
     <fullName>Measurement_Type__c</fullName>
     <description>Código de measurement.type que envía el simulador, por ejemplo WATER_PRESSURE.</description>
     <externalId>false</externalId>
-    <fieldManageability>SubscriberControlled</fieldManageability>
     <inlineHelpText>Tipo de medición tal como lo envía el simulador, por ejemplo WATER_PRESSURE.</inlineHelpText>
     <label>Measurement Type</label>
     <length>40</length>
-    <required>true</required>
+    <required>false</required>
     <type>Text</type>
     <unique>false</unique>
 </CustomField>

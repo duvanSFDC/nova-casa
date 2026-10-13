@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Limits_Contradictory</fullName>
+    <active>true</active>
+    <description>El crítico tiene que estar más allá de la advertencia en la dirección en que empeora la medición. Es la misma condición que MeasurementSeverityClassifier marca como THRESHOLD_CONTRADICTORY.</description>
+    <errorConditionFormula>OR(
+    AND(ISPICKVAL(Alert_Direction__c, &apos;Above&apos;), Critical_Limit__c &lt;= Warning_Limit__c),
+    AND(ISPICKVAL(Alert_Direction__c, &apos;Below&apos;), Critical_Limit__c &gt;= Warning_Limit__c)
+)</errorConditionFormula>
+    <errorDisplayField>Critical_Limit__c</errorDisplayField>
+    <errorMessage>El límite crítico tiene que ser más grave que el de advertencia: mayor si la medición empeora al subir, menor si empeora al bajar.</errorMessage>
+</ValidationRule>

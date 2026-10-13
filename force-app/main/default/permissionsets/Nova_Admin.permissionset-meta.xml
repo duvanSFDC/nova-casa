@@ -4,7 +4,46 @@
         <application>Nova_Casa</application>
         <visible>true</visible>
     </applicationVisibilities>
-    <description>Administración de Nova Casa (Camila): mantener los códigos del catálogo de edificios y equipos, y consultar qué pasó con cada señal, por qué se rechazó y en qué quedó la condición del equipo.</description>
+    <classAccesses>
+        <apexClass>AlertThresholdController</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <description>Administración de Nova Casa (Camila): mantener los códigos de edificios y equipos y los umbrales de alerta, y consultar qué pasó con cada señal, por qué se rechazó y en qué quedó la condición del equipo.</description>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Alert_Direction__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Asset_Type__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Critical_Limit__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Measurement_Type__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Threshold_Key__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Unit__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Alert_Threshold__c.Warning_Limit__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
         <field>Asset.Asset_Type__c</field>
@@ -173,6 +212,16 @@
     <hasActivationRequired>false</hasActivationRequired>
     <label>Nova Administración</label>
     <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>Alert_Threshold__c</object>
+        <viewAllFields>false</viewAllFields>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
         <allowCreate>false</allowCreate>
         <allowDelete>false</allowDelete>
         <allowEdit>false</allowEdit>
@@ -248,6 +297,10 @@
     </tabSettings>
     <tabSettings>
         <tab>standard-WorkOrder</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Umbrales_de_Alerta</tab>
         <visibility>Visible</visibility>
     </tabSettings>
 </PermissionSet>

@@ -3,11 +3,10 @@
     <fullName>Asset_Type__c</fullName>
     <description>Valor de Asset.Asset_Type__c al que aplica el registro, por ejemplo WATER_PUMP.</description>
     <externalId>false</externalId>
-    <fieldManageability>SubscriberControlled</fieldManageability>
     <inlineHelpText>Tipo de equipo tal como está en el campo Asset Type del activo, por ejemplo WATER_PUMP.</inlineHelpText>
     <label>Asset Type</label>
     <length>40</length>
-    <required>true</required>
+    <required>false</required>
     <type>Text</type>
     <unique>false</unique>
 </CustomField>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Asset_Type__c</fullName>
-    <description>Tipo de equipo. Con él se decide qué mediciones y unidades acepta el equipo (Measurement_Threshold__mdt). Se usa el tipo guardado en Salesforce, no el que trae la señal.</description>
+    <description>Tipo de equipo. Con él se decide qué mediciones y unidades acepta el equipo (Alert_Threshold__c). Se usa el tipo guardado en Salesforce, no el que trae la señal.</description>
     <inlineHelpText>Define qué mediciones acepta el equipo.</inlineHelpText>
     <label>Asset Type</label>
     <required>false</required>

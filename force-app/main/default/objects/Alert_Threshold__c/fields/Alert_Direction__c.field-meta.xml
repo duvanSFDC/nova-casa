@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Alert_Direction__c</fullName>
-    <description>Hacia dónde empeora la medición. Below: lo bajo es malo, como la presión de una bomba. Above: lo alto es malo, como la temperatura de un cuarto técnico. Vacío significa configuración incompleta, no Normal.</description>
+    <description>Hacia dónde empeora la medición. Below: lo bajo es malo, como la presión de una bomba. Above: lo alto es malo, como la temperatura de un cuarto técnico. No puede quedar vacío (regla Limits_Required).</description>
     <externalId>false</externalId>
-    <fieldManageability>SubscriberControlled</fieldManageability>
     <inlineHelpText>Below si la lectura empeora al bajar (presión). Above si empeora al subir (temperatura, consumo).</inlineHelpText>
     <label>Alert Direction</label>
     <required>false</required>
+    <trackHistory>true</trackHistory>
     <type>Picklist</type>
     <valueSet>
         <restricted>true</restricted>

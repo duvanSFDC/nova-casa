@@ -22,8 +22,8 @@ private class InterventionProcessingTest {
 
     /** Límites donde una presión baja es crítica (Below): <= 1.0 bar es Critical; <= 2.0 es Warning. */
     private static void useCatalog() {
-        List<Measurement_Threshold__mdt> records = new List<Measurement_Threshold__mdt>{
-            new Measurement_Threshold__mdt(
+        List<Alert_Threshold__c> records = new List<Alert_Threshold__c>{
+            new Alert_Threshold__c(
                 Asset_Type__c = 'WATER_PUMP',
                 Measurement_Type__c = 'WATER_PRESSURE',
                 Unit__c = 'BAR',
@@ -32,8 +32,7 @@ private class InterventionProcessingTest {
                 Critical_Limit__c = 1.0
             )
         };
-        MeasurementCatalog.testRecords = records;
-        MeasurementSeverityClassifier.testRecords = records;
+        AlertThresholdTestData.save(records);
     }
 
     /** deliveryKey distingue la entrega; messageId es la identidad (los reenvíos la repiten). */
@@ -254,7 +253,7 @@ private class InterventionProcessingTest {
         Integer dml = Limits.getDmlStatements() - dmlBefore;
         Test.stopTest();
 
-        Assert.areEqual(6, queries, 'Logs, edificios, equipos, identidad, condiciones e intervenciones: una consulta cada uno');
+        Assert.areEqual(7, queries, 'Logs, edificios, equipos, umbrales, identidad, condiciones e intervenciones: una consulta cada uno');
         Assert.areEqual(3, dml, 'Un upsert de condiciones, un insert de intervención y un upsert de logs');
         // Solo la más reciente queda vigente y abre intervención; las demás, atrasadas.
         Assert.areEqual(1, workOrders().size(), 'La recencia deja una sola crítica vigente por activo+tipo');

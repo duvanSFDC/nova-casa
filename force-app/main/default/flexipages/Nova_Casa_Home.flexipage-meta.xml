@@ -79,28 +79,20 @@
                 <componentName>flexipage:filterListCard</componentName>
                 <identifier>flexipage_filterListCard</identifier>
                 <visibilityRule>
+                    <booleanFilter>1 OR 2</booleanFilter>
                     <criteria>
                         <leftValue>{!$Permission.CustomPermission.Ver_Intervenciones_Operador}</leftValue>
+                        <operator>EQUAL</operator>
+                        <rightValue>true</rightValue>
+                    </criteria>
+                    <criteria>
+                        <leftValue>{!$Permission.CustomPermission.Ver_Intervenciones_Coordinador}</leftValue>
                         <operator>EQUAL</operator>
                         <rightValue>true</rightValue>
                     </criteria>
                 </visibilityRule>
             </componentInstance>
         </itemInstances>
-        <name>top</name>
-        <type>Region</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
-                <componentName>home:recentRecordContainer</componentName>
-                <identifier>home_recentRecordContainer</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>left</name>
-        <type>Region</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
         <itemInstances>
             <componentInstance>
                 <componentInstanceProperties>
@@ -138,6 +130,20 @@
                 </visibilityRule>
             </componentInstance>
         </itemInstances>
+        <name>top</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>home:recentRecordContainer</componentName>
+                <identifier>home_recentRecordContainer</identifier>
+            </componentInstance>
+        </itemInstances>
+        <name>left</name>
+        <type>Region</type>
+    </flexiPageRegions>
+    <flexiPageRegions>
         <name>middle</name>
         <type>Region</type>
     </flexiPageRegions>

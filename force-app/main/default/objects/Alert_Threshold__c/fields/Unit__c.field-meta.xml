@@ -3,11 +3,10 @@
     <fullName>Unit__c</fullName>
     <description>Única unidad compatible para esta medición, por ejemplo BAR. Una señal con otra unidad se rechaza como incompatible.</description>
     <externalId>false</externalId>
-    <fieldManageability>SubscriberControlled</fieldManageability>
     <inlineHelpText>Unidad que debe traer la señal, por ejemplo BAR. Otra unidad se rechaza.</inlineHelpText>
     <label>Unit</label>
     <length>40</length>
-    <required>true</required>
+    <required>false</required>
     <type>Text</type>
     <unique>false</unique>
 </CustomField>

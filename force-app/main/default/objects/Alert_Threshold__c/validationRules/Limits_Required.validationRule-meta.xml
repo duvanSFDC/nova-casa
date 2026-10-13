@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ValidationRule xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Limits_Required</fullName>
+    <active>true</active>
+    <description>Todos los datos del umbral son obligatorios. Se exige aquí y no marcando los campos como obligatorios, para que el permiso de cada campo decida quién lo edita.</description>
+    <errorConditionFormula>OR(
+    ISBLANK(Asset_Type__c),
+    ISBLANK(Measurement_Type__c),
+    ISBLANK(Unit__c),
+    ISBLANK(TEXT(Alert_Direction__c)),
+    ISBLANK(Warning_Limit__c),
+    ISBLANK(Critical_Limit__c)
+)</errorConditionFormula>
+    <errorMessage>Faltan datos: el umbral necesita tipo de equipo, tipo de medición, unidad, dirección, límite de advertencia y límite crítico.</errorMessage>
+</ValidationRule>

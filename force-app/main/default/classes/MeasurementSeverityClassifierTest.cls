@@ -1,7 +1,7 @@
 @IsTest
 private class MeasurementSeverityClassifierTest {
-    private static Measurement_Threshold__mdt threshold(String assetType, String measurementType, String direction, Decimal warning, Decimal critical) {
-        return new Measurement_Threshold__mdt(
+    private static Alert_Threshold__c threshold(String assetType, String measurementType, String direction, Decimal warning, Decimal critical) {
+        return new Alert_Threshold__c(
             Asset_Type__c = assetType,
             Measurement_Type__c = measurementType,
             Alert_Direction__c = direction,
@@ -10,9 +10,9 @@ private class MeasurementSeverityClassifierTest {
         );
     }
 
-    /** Mismos límites de ejemplo que la CMDT desplegada, para no depender de que alguien la edite. */
+    /** Mismos límites de ejemplo que los umbrales iniciales, para no depender de que alguien los edite. */
     private static MeasurementSeverityClassifier useThresholds() {
-        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+        MeasurementSeverityClassifier.testRecords = new List<Alert_Threshold__c>{
             threshold('WATER_PUMP', 'WATER_PRESSURE', 'Below', 1.5, 1.0),
             threshold('TECHNICAL_ROOM', 'TEMPERATURE', 'Above', 30, 35)
         };
@@ -52,12 +52,12 @@ private class MeasurementSeverityClassifierTest {
 
     @IsTest
     static void theSameValueFollowsTheCurrentLimit() {
-        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+        MeasurementSeverityClassifier.testRecords = new List<Alert_Threshold__c>{
             threshold('WATER_PUMP', 'WATER_PRESSURE', 'Below', 1.5, 1.0)
         };
         Assert.areEqual('Warning', severityOf(MeasurementSeverityClassifier.load(), 'WATER_PUMP', 'WATER_PRESSURE', 1.2));
 
-        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+        MeasurementSeverityClassifier.testRecords = new List<Alert_Threshold__c>{
             threshold('WATER_PUMP', 'WATER_PRESSURE', 'Below', 1.1, 1.0)
         };
         Assert.areEqual('Normal', severityOf(MeasurementSeverityClassifier.load(), 'WATER_PUMP', 'WATER_PRESSURE', 1.2), 'Con la advertencia en 1.1, 1.2 bar ya no es Warning.');
@@ -82,7 +82,7 @@ private class MeasurementSeverityClassifierTest {
 
     @IsTest
     static void anIncompleteThresholdIsNotNormal() {
-        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+        MeasurementSeverityClassifier.testRecords = new List<Alert_Threshold__c>{
             threshold('WATER_PUMP', 'WATER_PRESSURE', null, 1.5, null)
         };
         MeasurementSeverityClassifier.Classification result = MeasurementSeverityClassifier.load().classify('WATER_PUMP', 'WATER_PRESSURE', 2.0);
@@ -94,7 +94,7 @@ private class MeasurementSeverityClassifierTest {
 
     @IsTest
     static void aContradictoryRangeIsNotNormal() {
-        MeasurementSeverityClassifier.testRecords = new List<Measurement_Threshold__mdt>{
+        MeasurementSeverityClassifier.testRecords = new List<Alert_Threshold__c>{
             threshold('WATER_PUMP', 'WATER_PRESSURE', 'Below', 1.0, 1.5),
             threshold('TECHNICAL_ROOM', 'TEMPERATURE', 'Above', 30, 30)
         };
@@ -114,11 +114,16 @@ private class MeasurementSeverityClassifierTest {
     }
 
     @IsTest
-    static void readsTheDeployedThresholds() {
-        Measurement_Threshold__mdt deployed = Measurement_Threshold__mdt.getInstance('WATER_PUMP_WATER_PRESSURE');
+    static void readsTheSavedThresholds() {
+        AlertThresholdTestData.save(
+            new List<Alert_Threshold__c>{
+                new Alert_Threshold__c(Asset_Type__c = 'WATER_PUMP', Measurement_Type__c = 'WATER_PRESSURE', Unit__c = 'BAR',
+                    Alert_Direction__c = 'Below', Warning_Limit__c = 1.5, Critical_Limit__c = 1.0)
+            }
+        );
         MeasurementSeverityClassifier.Classification result = MeasurementSeverityClassifier.load()
-            .classify(deployed.Asset_Type__c, deployed.Measurement_Type__c, deployed.Critical_Limit__c);
+            .classify('WATER_PUMP', 'WATER_PRESSURE', 1.0);
 
-        Assert.areEqual('Critical', result.severity, 'El límite crítico guardado en Setup tiene que dar Critical.');
+        Assert.areEqual('Critical', result.severity, 'El límite crítico guardado en el umbral tiene que dar Critical.');
     }
 }
