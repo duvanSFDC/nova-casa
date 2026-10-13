@@ -176,6 +176,26 @@ private class OperatorAccessTest {
     }
 
     @IsTest
+    static void theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators() {
+        Fixture data = new Fixture();
+
+        System.runAs(data.alamedaOperator) {
+            System.assert(FeatureManagement.checkPermission('Ver_Intervenciones_Operador'));
+            System.assert(!FeatureManagement.checkPermission('Ver_Intervenciones_Coordinador'));
+        }
+        System.runAs(data.coordinator) {
+            System.assert(FeatureManagement.checkPermission('Ver_Intervenciones_Coordinador'));
+            System.assert(
+                !FeatureManagement.checkPermission('Ver_Intervenciones_Operador'),
+                'The coordinator should not get the rest of the operator home.'
+            );
+        }
+        System.runAs(data.withoutAccess) {
+            System.assert(!FeatureManagement.checkPermission('Ver_Intervenciones_Coordinador'));
+        }
+    }
+
+    @IsTest
     static void aUserWithoutTheOperatorPermissionGetsAnError() {
         Fixture data = new Fixture();
 

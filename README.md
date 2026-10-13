@@ -53,6 +53,7 @@ Cada persona ve solo lo que su oficio necesita, y el recorte se aplica en el ser
 | Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Lectura, todas |
 | Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | Lectura |
 | Pantalla *Estado operativo* | Sí | Sí | No la necesita |
+| Inicio de la app | Estado operativo, intervenciones abiertas y edificios (permiso `Ver_Intervenciones_Operador`) | Intervenciones abiertas (permiso `Ver_Intervenciones_Coordinador`) | Título y registros recientes |
 | Errores técnicos (`Signal_Log__c`) | No | No | Lectura, desde la pestaña *Signal Logs* (BR-209); nadie la edita |
 | Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | Crea, edita y borra |
 | Crear, editar o borrar lecturas | No | No | No; solo las escribe la ingesta |
@@ -282,10 +283,11 @@ Se comprobó en la org entrando como cada persona:
 - **Javier** abre la pestaña *Umbrales de alerta* en la app Nova Casa y ve los 4 umbrales con su unidad, hacia dónde empeora la medición y quién hizo el último cambio. Solo los dos límites se pueden editar.
 - Al guardar en la bomba de agua un crítico de 2 bar con la advertencia en 1,5 (contradictorio, porque la presión empeora al bajar), el guardado vuelve con el motivo de la regla de validación y el umbral queda igual (1,5 y 1).
 - **Laura** no tiene la pestaña, y si abre la dirección directamente ve "La página no existe".
+- En su **Inicio**, Javier ve la lista *Intervenciones abiertas* de los edificios que coordina; el resto del inicio de Laura no le aparece. El de Laura no cambia.
 
-Capturas en `docs/evidencia-umbrales/`: [pantalla de Javier](docs/evidencia-umbrales/javier-umbrales.png) y [operadora sin acceso](docs/evidencia-umbrales/operadora-sin-acceso.png).
+Capturas en `docs/evidencia-umbrales/`: [pantalla de Javier](docs/evidencia-umbrales/javier-umbrales.png) y [operadora sin acceso](docs/evidencia-umbrales/operadora-sin-acceso.png) e [inicio del coordinador](docs/evidencia-umbrales/coordinador-inicio.png).
 
-Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; Camila los administra; operadora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2) y las 10 pruebas de Jest de `alertThresholdEditor`.
+Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; Camila los administra; operadora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
 
 ## Decisiones
 
