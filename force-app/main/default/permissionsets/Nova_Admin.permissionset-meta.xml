@@ -4,6 +4,10 @@
         <application>Nova_Casa</application>
         <visible>true</visible>
     </applicationVisibilities>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>Ver_Logs_Senal</name>
+    </customPermissions>
     <description>Administración de Nova Casa (Camila): consulta la traza de señales (Signal_Log): qué se aceptó, qué se rechazó y por qué, sin secretos. Solo lectura y acotada a Signal_Log; no accede a edificios, equipos, condiciones, intervenciones ni umbrales.</description>
     <fieldPermissions>
         <editable>false</editable>
