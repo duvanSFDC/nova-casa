@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListView xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Intervenciones_en_progreso</fullName>
+    <columns>Subject</columns>
+    <columns>Asset</columns>
+    <columns>Location</columns>
+    <columns>Priority</columns>
+    <columns>Status</columns>
+    <columns>CreatedDate</columns>
+    <filterScope>Everything</filterScope>
+    <filters>
+        <field>Status</field>
+        <operation>equals</operation>
+        <value>In Progress</value>
+    </filters>
+    <label>Intervenciones en progreso</label>
+</ListView>
