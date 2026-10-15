@@ -75,15 +75,24 @@ private class AlertThresholdAccessTest {
     }
 
     @IsTest
-    static void theAdministratorManagesThresholds() {
+    static void theAdministratorDoesNotManageThresholds() {
+        // Camila (Nova_Admin) solo consulta Signal_Log; no administra los umbrales.
+        // Crear o borrar umbrales queda para el administrador de plataforma, no para una persona.
         Fixture data = new Fixture();
 
         System.runAs(data.administrator) {
-            Alert_Threshold__c room = threshold('TECHNICAL_ROOM', 'TEMPERATURE', 'CELSIUS', 'Above', 30, 35);
-            Database.insert(room, AccessLevel.USER_MODE);
-            room.Unit__c = 'FAHRENHEIT';
-            Database.update(room, AccessLevel.USER_MODE);
-            Database.delete(room, AccessLevel.USER_MODE);
+            try {
+                Database.insert(
+                    threshold('TECHNICAL_ROOM', 'TEMPERATURE', 'CELSIUS', 'Above', 30, 35),
+                    AccessLevel.USER_MODE
+                );
+                System.assert(false, 'The administrator should not create thresholds.');
+            } catch (Exception expected) {
+                System.assert(
+                    !(expected instanceof System.AssertException),
+                    'The administrator should not create thresholds.'
+                );
+            }
         }
         System.assertEquals(1, [SELECT COUNT() FROM Alert_Threshold__c WITH SYSTEM_MODE]);
     }
@@ -92,7 +101,7 @@ private class AlertThresholdAccessTest {
     static void operatorsAndUsersWithoutAccessCannotReadThresholds() {
         Fixture data = new Fixture();
 
-        for (User person : new List<User>{ data.operator, data.withoutAccess }) {
+        for (User person : new List<User>{ data.operator, data.administrator, data.withoutAccess }) {
             System.runAs(person) {
                 try {
                     List<Alert_Threshold__c> visible = [

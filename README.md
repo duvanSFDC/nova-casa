@@ -49,14 +49,16 @@ Cada persona ve solo lo que su oficio necesita, y el recorte se aplica en el ser
 
 | Qué | Operador · Laura (`Nova_Operator`) | Coordinador · Javier (`Nova_Coordinator`) | Administradora · Camila (`Nova_Admin`) |
 | --- | --- | --- | --- |
-| Edificios (`Location`) y activos (`Asset`) | Lectura, solo sus edificios | Lectura, los edificios que coordina (en la demo, los tres) | Lectura, todos |
-| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Lectura, todas |
-| Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | Lectura |
+| Edificios (`Location`) y activos (`Asset`) | Lectura, solo sus edificios | Lectura, los edificios que coordina (en la demo, los tres) | No |
+| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | No |
+| Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | No |
 | Pantalla *Estado operativo* | Sí | Sí | No la necesita |
-| Inicio de la app | Estado operativo, intervenciones abiertas y edificios (permiso `Ver_Intervenciones_Operador`) | Intervenciones abiertas (permiso `Ver_Intervenciones_Coordinador`) | Título y registros recientes |
+| Inicio de la app | Estado operativo, intervenciones abiertas y edificios (permiso `Ver_Intervenciones_Operador`) | Intervenciones abiertas (permiso `Ver_Intervenciones_Coordinador`) | Señales fallidas (permiso `Ver_Logs_Senal`) y registros recientes |
 | Errores técnicos (`Signal_Log__c`) | No | No | Lectura, desde la pestaña *Signal Logs* (BR-209); nadie la edita |
-| Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | Crea, edita y borra |
+| Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | No |
 | Crear, editar o borrar lecturas | No | No | No; solo las escribe la ingesta |
+
+Camila es estrictamente la lectora de la traza (BR-209): no ve edificios, activos, lecturas, intervenciones ni umbrales. Mantener el catálogo (códigos de edificios y equipos) y crear o borrar umbrales son tareas del administrador de plataforma (Emiliano), no de una persona; Javier solo ajusta los dos límites de cada umbral.
 
 Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crítica vigente.
 
@@ -287,7 +289,7 @@ Se comprobó en la org entrando como cada persona:
 
 Capturas en `docs/evidencia-umbrales/`: [pantalla de Javier](docs/evidencia-umbrales/javier-umbrales.png) y [operadora sin acceso](docs/evidencia-umbrales/operadora-sin-acceso.png) e [inicio del coordinador](docs/evidencia-umbrales/coordinador-inicio.png).
 
-Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; Camila los administra; operadora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
+Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; Camila no los administra (solo consulta Signal_Log); operadora, administradora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
 
 ## Decisiones
 
