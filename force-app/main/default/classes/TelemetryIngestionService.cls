@@ -75,8 +75,15 @@ public inherited sharing class TelemetryIngestionService {
 
     private void applySession(Ingestion_State__c state, NovaSimulatorClient.Session session) {
         state.Cursor__c = session.cursor;
-        state.Session_Started_At__c = session.startedAt;
+        // El inicio de sesión identifica la sesión del simulador (que reinicia la numeración de
+        // messageId en cada /session). Si el simulador no lo devuelve, se usa la hora actual.
+        state.Session_Started_At__c = session.startedAt == null ? Datetime.now() : session.startedAt;
         state.Session_Expires_At__c = session.expiresAt;
+    }
+
+    /** Clave de la sesión actual: con el messageId forma la identidad de deduplicación (BR-205). */
+    private static String sessionKeyOf(Ingestion_State__c state) {
+        return state.Session_Started_At__c == null ? null : String.valueOf(state.Session_Started_At__c.getTime());
     }
 
     /** Pide un lote con el cursor del estado, publica los eventos y guarda el nextCursor. */
@@ -86,9 +93,12 @@ public inherited sharing class TelemetryIngestionService {
 
         NovaSimulatorClient.TelemetryPage page = client.fetchTelemetry(state.Cursor__c, size);
 
+        String sessionKey = sessionKeyOf(state);
         List<Telemetry_Signal__e> events = new List<Telemetry_Signal__e>();
         for (Map<String, Object> item : page.items) {
-            events.add(TelemetrySignalMapper.toEvent(item));
+            Telemetry_Signal__e evt = TelemetrySignalMapper.toEvent(item);
+            evt.Session_Key__c = sessionKey;
+            events.add(evt);
         }
         TelemetryPublisher.Outcome outcome = TelemetryPublisher.publish(events);
 

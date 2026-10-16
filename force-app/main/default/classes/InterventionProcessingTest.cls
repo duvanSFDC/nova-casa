@@ -170,6 +170,45 @@ private class InterventionProcessingTest {
     }
 
     @IsTest
+    static void sameMessageIdInAnotherSessionIsNotAConflict() {
+        useCatalog();
+        // El simulador reinicia la numeración de messageId en cada sesión. El mismo msg_000001
+        // en otra sesión es una señal nueva (otra identidad), no un conflicto.
+        Telemetry_Signal__e first = pressure('s1', 'msg_000001', 0.5, T2);
+        first.Session_Key__c = 'SESION-A';
+        Telemetry_Signal__e second = pressure('s2', 'msg_000001', 0.5, T3);
+        second.Session_Key__c = 'SESION-B';
+
+        Test.startTest();
+        deliver(new List<Telemetry_Signal__e>{ first });
+        deliver(new List<Telemetry_Signal__e>{ second });
+        Test.stopTest();
+
+        Assert.areEqual(2, workOrders().size(), 'Mismo messageId en otra sesión abre su propia intervención');
+        Map<String, Signal_Log__c> logs = logsByDelivery();
+        Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, logs.get('dlv_s1').Result__c);
+        Assert.areEqual(TelemetrySignalOutcome.RESULT_ACCEPTED, logs.get('dlv_s2').Result__c, 'La otra sesión no es conflicto');
+    }
+
+    @IsTest
+    static void sameMessageIdSameSessionResendStaysDuplicate() {
+        useCatalog();
+        // Dentro de la MISMA sesión, un reenvío con el mismo contenido sigue siendo duplicado.
+        Telemetry_Signal__e original = pressure('o', 'msg_000001', 0.5, T2);
+        original.Session_Key__c = 'SESION-A';
+        Telemetry_Signal__e resend = pressure('r', 'msg_000001', 0.5, T2);
+        resend.Session_Key__c = 'SESION-A';
+
+        Test.startTest();
+        deliver(new List<Telemetry_Signal__e>{ original });
+        deliver(new List<Telemetry_Signal__e>{ resend });
+        Test.stopTest();
+
+        Assert.areEqual(1, workOrders().size(), 'El reenvío en la misma sesión no crea otra intervención');
+        Assert.areEqual(TelemetrySignalOutcome.RESULT_DUPLICATE, logsByDelivery().get('dlv_r').Result__c);
+    }
+
+    @IsTest
     static void lateCriticalDoesNotCreateIntervention() {
         useCatalog();
         Test.startTest();
