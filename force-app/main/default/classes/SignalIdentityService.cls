@@ -27,16 +27,19 @@ public inherited sharing class SignalIdentityService {
             return;
         }
 
-        // Señal previa Accepted por identidad (entregas anteriores). El lote actual aún no está Accepted.
-        Map<String, Signal_Log__c> priorByMessageId = new Map<String, Signal_Log__c>();
+        // Señal previa Accepted por identidad (entregas anteriores). La identidad es sesión + messageId:
+        // el simulador reinicia la numeración de messageId en cada sesión, así que el mismo número en
+        // otra sesión no es un conflicto. Sin sesión (p. ej. pruebas), la identidad es solo el messageId.
+        Map<String, Signal_Log__c> priorByIdentity = new Map<String, Signal_Log__c>();
         for (Signal_Log__c log : [
-            SELECT Message_Id__c, Building_Id__c, Asset_Id__c, Message_Type__c, Occurred_At__c, Work_Order__c
+            SELECT Session_Key__c, Message_Id__c, Building_Id__c, Asset_Id__c, Message_Type__c, Occurred_At__c, Work_Order__c
             FROM Signal_Log__c
             WHERE Message_Id__c IN :messageIds AND Result__c = :TelemetrySignalOutcome.RESULT_ACCEPTED
             WITH SYSTEM_MODE
         ]) {
-            if (!priorByMessageId.containsKey(log.Message_Id__c)) {
-                priorByMessageId.put(log.Message_Id__c, log);
+            String identity = identityKey(log.Session_Key__c, log.Message_Id__c);
+            if (!priorByIdentity.containsKey(identity)) {
+                priorByIdentity.put(identity, log);
             }
         }
 
@@ -45,11 +48,11 @@ public inherited sharing class SignalIdentityService {
             if (outcomes[i].result != TelemetrySignalOutcome.RESULT_ACCEPTED) {
                 continue;
             }
-            String messageId = events[i].Message_Id__c;
-            Signal_Log__c prior = priorByMessageId.get(messageId);
+            String identity = identityKey(events[i].Session_Key__c, events[i].Message_Id__c);
+            Signal_Log__c prior = priorByIdentity.get(identity);
             if (prior != null) {
                 outcomes.set(i, classifyAgainstPrior(events[i], outcomes[i], prior));
-            } else if (seenInBatch.contains(messageId)) {
+            } else if (seenInBatch.contains(identity)) {
                 // Reenvío dentro del mismo lote: la primera queda Accepted; esta reutiliza el resultado.
                 // El Work Order se enlaza después de crearlo (InterventionService).
                 outcomes.set(
@@ -58,13 +61,19 @@ public inherited sharing class SignalIdentityService {
                         outcomes[i].assetId,
                         outcomes[i].locationId,
                         null,
-                        'Reenvío dentro del lote del mensaje ' + messageId + '; reutiliza el resultado.'
+                        'Reenvío dentro del lote del mensaje ' + events[i].Message_Id__c + '; reutiliza el resultado.'
                     )
                 );
             } else {
-                seenInBatch.add(messageId);
+                seenInBatch.add(identity);
             }
         }
+    }
+
+    /** Identidad de deduplicación: sesión + messageId. Sin sesión (pruebas), solo el messageId. */
+    @TestVisible
+    private static String identityKey(String sessionKey, String messageId) {
+        return String.isBlank(sessionKey) ? messageId : sessionKey + '|' + messageId;
     }
 
     private static TelemetrySignalOutcome classifyAgainstPrior(

@@ -30,71 +30,76 @@ public inherited sharing class InterventionService {
      * Modifica la lista outcomes: pone el Work Order en las que lo logran y marca las que fallan.
      */
     public static void ensureInterventions(List<Telemetry_Signal__e> events, List<TelemetrySignalOutcome> outcomes) {
-        // 1. Críticas aceptadas, una por messageId.
-        Map<String, Integer> indexByMessageId = new Map<String, Integer>();
+        // 1. Críticas aceptadas, una por identidad (sesión + messageId).
+        Map<String, Integer> indexByIdentity = new Map<String, Integer>();
         for (Integer i = 0; i < outcomes.size(); i++) {
             TelemetrySignalOutcome outcome = outcomes[i];
             if (outcome.result == TelemetrySignalOutcome.RESULT_ACCEPTED &&
                 MeasurementSeverityClassifier.SEVERITY_CRITICAL.equals(outcome.severity) &&
                 String.isNotBlank(events[i].Message_Id__c)) {
-                indexByMessageId.put(events[i].Message_Id__c, i);
+                indexByIdentity.put(identityKey(events[i]), i);
             }
         }
-        if (indexByMessageId.isEmpty()) {
+        if (indexByIdentity.isEmpty()) {
             return;
         }
 
         // 2. Intervenciones que ya existen para esas identidades (reenvío o carrera previa).
-        Map<String, Id> workOrderIdByKey = existingWorkOrders(indexByMessageId.keySet());
+        Map<String, Id> workOrderIdByKey = existingWorkOrders(indexByIdentity.keySet());
 
         // 3. Reutilizar las que existen; preparar la creación de las nuevas.
         List<WorkOrder> toInsert = new List<WorkOrder>();
         List<Integer> insertPositions = new List<Integer>();
-        for (String messageId : indexByMessageId.keySet()) {
-            Integer i = indexByMessageId.get(messageId);
-            if (workOrderIdByKey.containsKey(messageId)) {
-                outcomes[i].withWorkOrder(workOrderIdByKey.get(messageId));
+        for (String identity : indexByIdentity.keySet()) {
+            Integer i = indexByIdentity.get(identity);
+            if (workOrderIdByKey.containsKey(identity)) {
+                outcomes[i].withWorkOrder(workOrderIdByKey.get(identity));
             } else {
-                toInsert.add(buildWorkOrder(messageId, outcomes[i], events[i]));
+                toInsert.add(buildWorkOrder(identity, outcomes[i], events[i]));
                 insertPositions.add(i);
             }
         }
 
         createInterventions(toInsert, insertPositions, events, outcomes);
-        linkBatchDuplicates(indexByMessageId, events, outcomes);
+        linkBatchDuplicates(indexByIdentity, events, outcomes);
+    }
+
+    /** Identidad de la intervención: sesión + messageId. Sin sesión (pruebas), solo el messageId. */
+    private static String identityKey(Telemetry_Signal__e evt) {
+        return String.isBlank(evt.Session_Key__c) ? evt.Message_Id__c : evt.Session_Key__c + '|' + evt.Message_Id__c;
     }
 
     /** Enlaza los reenvíos del mismo lote (Duplicate sin Work Order) a la intervención recién creada. */
     private static void linkBatchDuplicates(
-        Map<String, Integer> indexByMessageId,
+        Map<String, Integer> indexByIdentity,
         List<Telemetry_Signal__e> events,
         List<TelemetrySignalOutcome> outcomes
     ) {
-        Map<String, Id> workOrderByMessageId = new Map<String, Id>();
-        for (String messageId : indexByMessageId.keySet()) {
-            Id workOrderId = outcomes[indexByMessageId.get(messageId)].workOrderId;
+        Map<String, Id> workOrderByIdentity = new Map<String, Id>();
+        for (String identity : indexByIdentity.keySet()) {
+            Id workOrderId = outcomes[indexByIdentity.get(identity)].workOrderId;
             if (workOrderId != null) {
-                workOrderByMessageId.put(messageId, workOrderId);
+                workOrderByIdentity.put(identity, workOrderId);
             }
         }
-        if (workOrderByMessageId.isEmpty()) {
+        if (workOrderByIdentity.isEmpty()) {
             return;
         }
         for (Integer i = 0; i < outcomes.size(); i++) {
             if (outcomes[i].result == TelemetrySignalOutcome.RESULT_DUPLICATE &&
                 outcomes[i].workOrderId == null &&
-                workOrderByMessageId.containsKey(events[i].Message_Id__c)) {
-                outcomes[i].withWorkOrder(workOrderByMessageId.get(events[i].Message_Id__c));
+                workOrderByIdentity.containsKey(identityKey(events[i]))) {
+                outcomes[i].withWorkOrder(workOrderByIdentity.get(identityKey(events[i])));
             }
         }
     }
 
-    private static Map<String, Id> existingWorkOrders(Set<String> messageIds) {
+    private static Map<String, Id> existingWorkOrders(Set<String> identities) {
         Map<String, Id> byKey = new Map<String, Id>();
         for (WorkOrder order : [
             SELECT Id, Message_Key__c
             FROM WorkOrder
-            WHERE Message_Key__c IN :messageIds
+            WHERE Message_Key__c IN :identities
             WITH SYSTEM_MODE
         ]) {
             byKey.put(order.Message_Key__c, order.Id);
@@ -102,9 +107,9 @@ public inherited sharing class InterventionService {
         return byKey;
     }
 
-    private static WorkOrder buildWorkOrder(String messageId, TelemetrySignalOutcome outcome, Telemetry_Signal__e evt) {
+    private static WorkOrder buildWorkOrder(String identity, TelemetrySignalOutcome outcome, Telemetry_Signal__e evt) {
         return new WorkOrder(
-            Message_Key__c = messageId,
+            Message_Key__c = identity,
             AssetId = outcome.assetId,
             LocationId = outcome.locationId,
             Status = STATUS_NEW,
@@ -162,13 +167,13 @@ public inherited sharing class InterventionService {
         }
         List<Database.SaveResult> results = Database.insert(toInsert, false, AccessLevel.SYSTEM_MODE);
 
-        Map<String, Integer> raceByMessageId = new Map<String, Integer>();
+        Map<String, Integer> raceByIdentity = new Map<String, Integer>();
         for (Integer r = 0; r < results.size(); r++) {
             Integer i = insertPositions[r];
             if (results[r].isSuccess()) {
                 outcomes[i].withWorkOrder(results[r].getId());
             } else if (isDuplicate(results[r])) {
-                raceByMessageId.put(events[i].Message_Id__c, i);
+                raceByIdentity.put(identityKey(events[i]), i);
             } else {
                 outcomes.set(
                     i,
@@ -184,18 +189,18 @@ public inherited sharing class InterventionService {
         }
 
         // Carrera concurrente: la intervención ya existe, se reutiliza.
-        if (!raceByMessageId.isEmpty()) {
-            Map<String, Id> created = existingWorkOrders(raceByMessageId.keySet());
-            for (String messageId : raceByMessageId.keySet()) {
-                Integer i = raceByMessageId.get(messageId);
-                if (created.containsKey(messageId)) {
-                    outcomes[i].withWorkOrder(created.get(messageId));
+        if (!raceByIdentity.isEmpty()) {
+            Map<String, Id> created = existingWorkOrders(raceByIdentity.keySet());
+            for (String identity : raceByIdentity.keySet()) {
+                Integer i = raceByIdentity.get(identity);
+                if (created.containsKey(identity)) {
+                    outcomes[i].withWorkOrder(created.get(identity));
                 } else {
                     outcomes.set(
                         i,
                         TelemetrySignalOutcome.rejected(
                                 TelemetrySignalOutcome.REASON_INTERVENTION_FAILED,
-                                'No se pudo crear ni reutilizar la intervención del mensaje ' + messageId + '.',
+                                'No se pudo crear ni reutilizar la intervención del mensaje ' + events[i].Message_Id__c + '.',
                                 true
                             )
                             .withReferences(outcomes[i].assetId, outcomes[i].locationId)

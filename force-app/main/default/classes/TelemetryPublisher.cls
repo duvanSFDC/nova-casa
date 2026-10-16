@@ -60,6 +60,7 @@ public inherited sharing class TelemetryPublisher {
         return new Signal_Log__c(
             Delivery_Id__c = evt.Delivery_Id__c,
             Message_Id__c = evt.Message_Id__c,
+            Session_Key__c = evt.Session_Key__c,
             Message_Type__c = evt.Message_Type__c,
             Building_Id__c = evt.Building_Id__c,
             Asset_Id__c = evt.Asset_Id__c,
