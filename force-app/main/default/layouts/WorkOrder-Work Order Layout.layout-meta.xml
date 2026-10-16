@@ -67,8 +67,8 @@
                 <field>CurrencyIsoCode</field>
             </layoutItems>
             <layoutItems>
-                <behavior>Edit</behavior>
-                <field>Location__c</field>
+                <behavior>Readonly</behavior>
+                <field>LocationId</field>
             </layoutItems>
         </layoutColumns>
         <layoutColumns>

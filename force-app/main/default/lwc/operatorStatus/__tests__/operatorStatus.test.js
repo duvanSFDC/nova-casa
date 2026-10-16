@@ -1,5 +1,5 @@
 import { createElement } from 'lwc';
-import OperatorStatus, { computeSummary, isUrgentAsset } from 'c/operatorStatus';
+import OperatorStatus, { computeSummary, isUrgentAsset, relativeAge } from 'c/operatorStatus';
 import getAssets from '@salesforce/apex/OperatorStatusService.getAssets';
 import getBuildings from '@salesforce/apex/OperatorStatusService.getBuildings';
 
@@ -175,6 +175,19 @@ describe('computeSummary', () => {
 
     it('con una lista vacía devuelve ceros', () => {
         expect(computeSummary([])).toEqual({ criticals: 0, warnings: 0, noReading: 0 });
+    });
+});
+
+describe('relativeAge', () => {
+    it('expresa la antigüedad en minutos, horas o días', () => {
+        expect(relativeAge(new Date(Date.now() - 40 * 60000).toISOString())).toBe('hace 40 min');
+        expect(relativeAge(new Date(Date.now() - 3 * 3600000).toISOString())).toBe('hace 3 h');
+        expect(relativeAge(new Date(Date.now() - 9 * 86400000).toISOString())).toBe('hace 9 días');
+        expect(relativeAge(new Date(Date.now() - 86400000).toISOString())).toBe('hace 1 día');
+    });
+
+    it('sin fecha devuelve raya', () => {
+        expect(relativeAge(null)).toBe('—');
     });
 });
 
