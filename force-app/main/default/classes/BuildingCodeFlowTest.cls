@@ -4,14 +4,17 @@ private class BuildingCodeFlowTest {
     static void copiesTheBuildingCodeToAssetConditionAndWorkOrder() {
         Fixture data = new Fixture();
 
-        System.assertEquals('BLD-TST-001', [SELECT Building_Code__c FROM Asset WHERE Id = :data.pump.Id].Building_Code__c);
         System.assertEquals(
             'BLD-TST-001',
-            [SELECT Building_Code__c FROM Asset_Condition__c WHERE Id = :data.condition.Id].Building_Code__c
+            [SELECT Building_Code__c FROM Asset WHERE Id = :data.pump.Id WITH SYSTEM_MODE].Building_Code__c
         );
         System.assertEquals(
             'BLD-TST-001',
-            [SELECT Building_Code__c FROM WorkOrder WHERE Id = :data.order.Id].Building_Code__c
+            [SELECT Building_Code__c FROM Asset_Condition__c WHERE Id = :data.condition.Id WITH SYSTEM_MODE].Building_Code__c
+        );
+        System.assertEquals(
+            'BLD-TST-001',
+            [SELECT Building_Code__c FROM WorkOrder WHERE Id = :data.order.Id WITH SYSTEM_MODE].Building_Code__c
         );
     }
 
@@ -20,13 +23,16 @@ private class BuildingCodeFlowTest {
         Fixture data = new Fixture();
 
         data.pump.LocationId = data.sur.Id;
-        update data.pump;
-        update data.condition;
+        Database.update(data.pump, AccessLevel.SYSTEM_MODE);
+        Database.update(data.condition, AccessLevel.SYSTEM_MODE);
 
-        System.assertEquals('BLD-TST-002', [SELECT Building_Code__c FROM Asset WHERE Id = :data.pump.Id].Building_Code__c);
         System.assertEquals(
             'BLD-TST-002',
-            [SELECT Building_Code__c FROM Asset_Condition__c WHERE Id = :data.condition.Id].Building_Code__c
+            [SELECT Building_Code__c FROM Asset WHERE Id = :data.pump.Id WITH SYSTEM_MODE].Building_Code__c
+        );
+        System.assertEquals(
+            'BLD-TST-002',
+            [SELECT Building_Code__c FROM Asset_Condition__c WHERE Id = :data.condition.Id WITH SYSTEM_MODE].Building_Code__c
         );
     }
 
@@ -35,11 +41,11 @@ private class BuildingCodeFlowTest {
         Fixture data = new Fixture();
 
         data.condition.Building_Code__c = 'BLD-OTRO';
-        update data.condition;
+        Database.update(data.condition, AccessLevel.SYSTEM_MODE);
 
         System.assertEquals(
             'BLD-TST-001',
-            [SELECT Building_Code__c FROM Asset_Condition__c WHERE Id = :data.condition.Id].Building_Code__c
+            [SELECT Building_Code__c FROM Asset_Condition__c WHERE Id = :data.condition.Id WITH SYSTEM_MODE].Building_Code__c
         );
     }
 
