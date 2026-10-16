@@ -69,7 +69,7 @@
         <rowHeight>36</rowHeight>
     </dashboardGridLayout>
     <dashboardType>LoggedInUser</dashboardType>
-    <description>Dashboard para coordinadores que muestra los edificios que cuentan con alertas críticas.</description>
+    <description>Dashboard para gerentes regionales que muestra los edificios de su región con alertas críticas.</description>
     <isGridLayout>true</isGridLayout>
     <owner>duvn.mondragn.8b204f8210@salesforce.com</owner>
     <runningUser>duvn.mondragn.8b204f8210@salesforce.com</runningUser>

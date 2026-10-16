@@ -36,6 +36,7 @@ const COLUMNS = [
         }
     },
     { label: 'Hora de origen', fieldName: 'occurredAtLabel' },
+    { label: 'Antigüedad', fieldName: 'ageLabel' },
     {
         label: 'Intervención',
         fieldName: 'workOrderUrl',
@@ -207,7 +208,8 @@ export function toTableRow(row) {
             ...base,
             readingLabel: 'Sin lectura',
             severityLabel: '—',
-            occurredAtLabel: '—'
+            occurredAtLabel: '—',
+            ageLabel: '—'
         };
     }
     const severity = severityCell(row.severity);
@@ -217,8 +219,31 @@ export function toTableRow(row) {
         severityLabel: severity.label,
         severityIcon: severity.icon,
         severityClass: severity.cellClass,
-        occurredAtLabel: formatWhen(row.occurredAt)
+        occurredAtLabel: formatWhen(row.occurredAt),
+        ageLabel: relativeAge(row.occurredAt)
     };
+}
+
+/** Antigüedad legible de la lectura ("hace 40 min", "hace 3 h", "hace 9 días") para que una
+ *  lectura vieja no parezca actual (BR-207). */
+export function relativeAge(value) {
+    if (!value) {
+        return '—';
+    }
+    const diffMs = Date.now() - new Date(value).getTime();
+    if (diffMs < 60000) {
+        return 'hace instantes';
+    }
+    const minutes = Math.floor(diffMs / 60000);
+    if (minutes < 60) {
+        return `hace ${minutes} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+        return `hace ${hours} h`;
+    }
+    const days = Math.floor(hours / 24);
+    return `hace ${days} ${days === 1 ? 'día' : 'días'}`;
 }
 
 export function isUrgentAsset(row) {
