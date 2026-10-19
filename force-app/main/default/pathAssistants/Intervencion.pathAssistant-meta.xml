@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PathAssistant xmlns="http://soap.sforce.com/2006/04/metadata">
+    <active>true</active>
+    <entityName>WorkOrder</entityName>
+    <fieldName>Status</fieldName>
+    <masterLabel>Intervención</masterLabel>
+    <pathAssistantSteps>
+        <info>La intervención se abrió por una lectura crítica. Revisa el equipo y el edificio afectados.</info>
+        <picklistValueName>New</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <info>Marca "En progreso" cuando empieces a atender el equipo.</info>
+        <picklistValueName>In Progress</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <info>El trabajo terminó; verifica que la lectura del equipo volvió a la normalidad.</info>
+        <picklistValueName>Completed</picklistValueName>
+    </pathAssistantSteps>
+    <pathAssistantSteps>
+        <info>Cierra la intervención cuando todo quede resuelto.</info>
+        <picklistValueName>Closed</picklistValueName>
+    </pathAssistantSteps>
+    <recordTypeName>__MASTER__</recordTypeName>
+</PathAssistant>
