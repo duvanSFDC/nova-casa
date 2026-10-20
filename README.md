@@ -39,7 +39,7 @@ Cada log guarda cuatro horas por separado:
 - `classes/AlertThresholdController` y `lwc/alertThresholdEditor`: la pantalla *Umbrales de alerta* (pestaña `tabs/Umbrales_de_Alerta`), donde Javier ajusta los dos límites.
 - `platformEventSubscriberConfigs/TelemetrySignalTriggerConfig`: hace que el suscriptor reciba hasta 200 eventos por invocación.
 - `classes/OperatorStatusService` y `lwc/operatorStatus`: la pantalla *Estado operativo* de Laura (lecturas vigentes, estado del activo e intervención abierta). `permissionsets/Nova_Operator`: el acceso de Laura a esa pantalla.
-- `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta. `permissionsets/Nova_Admin`: acceso de solo lectura a la traza para Camila. `permissionsets/Nova_Coordinator`: el acceso de Javier (lee y avanza intervenciones, y ajusta los límites de los umbrales).
+- `permissionsets/Nova_Integration`: acceso a los objetos y las clases de la ingesta. `permissionsets/Nova_Admin`: capacidades de Camila en la app (las pestañas y la tarjeta de señales rechazadas del inicio); su amplitud de datos la da el perfil System Administrator. `permissionsets/Nova_Coordinator`: el acceso de Javier (lee y avanza intervenciones, y ajusta los límites de los umbrales).
 - `applications/Nova_Casa`: la app, con sus pestañas, el inicio `flexipages/Nova_Casa_Home` y la ficha de activo `flexipages/Asset_Record_Page`.
 - `groups/` (un grupo por edificio y `Nova_Coordination`), `sharingRules/` y los flujos `Asset_Building_Code`, `Asset_Condition_Building_Code` y `Work_Order_Building_Code`, que copian el código del edificio a `Building_Code__c`: quién ve qué edificio (BR-208).
 
@@ -47,18 +47,18 @@ Cada log guarda cuatro horas por separado:
 
 Cada persona ve solo lo que su oficio necesita, y el recorte se aplica en el servidor, no solo en la pantalla.
 
-| Qué | Operador · Laura (`Nova_Operator`) | Coordinador · Javier (`Nova_Coordinator`) | Administradora · Camila (`Nova_Admin`) |
+| Qué | Operador · Laura (`Nova_Operator`) | Coordinador · Javier (`Nova_Coordinator`) | Administradora · Camila (System Administrator + `Nova_Admin`) |
 | --- | --- | --- | --- |
-| Edificios (`Location`) y activos (`Asset`) | Lectura, solo sus edificios | Lectura, los edificios que coordina (en la demo, los tres) | No |
-| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | No |
-| Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | No |
-| Pantalla *Estado operativo* | Sí | Sí | No la necesita |
-| Inicio de la app | Estado operativo, intervenciones abiertas y edificios (permiso `Ver_Intervenciones_Operador`) | Intervenciones abiertas (permiso `Ver_Intervenciones_Coordinador`) | Señales fallidas (permiso `Ver_Logs_Senal`) y registros recientes |
-| Errores técnicos (`Signal_Log__c`) | No | No | Lectura, desde la pestaña *Signal Logs* (BR-209); nadie la edita |
-| Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | No |
-| Crear, editar o borrar lecturas | No | No | No; solo las escribe la ingesta |
+| Edificios (`Location`) y activos (`Asset`) | Lectura, solo sus edificios | Lectura, los edificios que coordina (en la demo, los tres) | Sí (System Administrator) |
+| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Sí (System Administrator) |
+| Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | Sí (avanzar y cerrar sigue siendo rol de Javier) |
+| Pantalla *Estado operativo* | Sí | Sí | Sí (tiene todas las pestañas) |
+| Inicio de la app | Estado operativo, intervenciones abiertas y edificios (permiso `Ver_Intervenciones_Operador`) | Intervenciones abiertas (permiso `Ver_Intervenciones_Coordinador`) | Señales rechazadas (permiso `Ver_Logs_Senal`) y registros recientes |
+| Errores técnicos (`Signal_Log__c`) | No | No | Lectura, desde la pestaña *Signal Logs* (BR-209); no se edita en el flujo |
+| Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | Sí (System Administrator) |
+| Crear, editar o borrar lecturas | No | No | Las escribe la ingesta |
 
-Camila es estrictamente la lectora de la traza (BR-209): no ve edificios, activos, lecturas, intervenciones ni umbrales. Mantener el catálogo (códigos de edificios y equipos) y crear o borrar umbrales son tareas del administrador de plataforma (Emiliano), no de una persona; Javier solo ajusta los dos límites de cada umbral.
+**Directriz de Emiliano (sobre el administrador):** la Administradora (Camila) es un **System Administrator**: naturalmente tiene el **mayor privilegio**, incluido el acceso a los **objetos de telemetría**, y ve **todas las pestañas** de la app. Investiga el `Signal_Log` como parte de su rol (BR-209), sin estar limitada a eso. La matriz recorta a las personas **operativas** (operador y coordinador); el administrador queda por encima de ese recorte. El permission set `Nova_Admin` aporta las pestañas de la app y la tarjeta de señales rechazadas del inicio; su amplitud de datos la da el perfil. Javier sigue siendo quien ajusta los dos límites de cada umbral.
 
 Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crítica vigente.
 
@@ -83,7 +83,7 @@ Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crí
 
 ## Cómo investigar una señal (BR-209)
 
-Cada señal deja un `Signal_Log__c` que se guarda como registro, no en un log temporal. Camila lo consulta desde la pestaña **Signal Logs** de la app Nova Casa; solo `Nova_Admin` la ve, y nadie puede editar la traza.
+Cada señal deja un `Signal_Log__c` que se guarda como registro, no en un log temporal. Camila lo consulta desde la pestaña **Signal Logs** de la app Nova Casa; entre las personas operativas (operador y coordinador) nadie la ve, y la traza no se edita en el flujo.
 
 1. **Buscar por identidad.** En el buscador de Salesforce, el `messageId`, el `deliveryId` o el `EventUuid` llevan al log. Un mismo `messageId` puede traer varios logs: el original y sus reenvíos.
 2. **Ver qué pasó.** La ficha empieza por *¿Qué pasó y qué hago?*: el estado de investigación, qué hacer, el detalle del error, el resultado, el motivo y si se puede reintentar. Luego vienen la identidad, las cuatro horas (origen, publicación del simulador, publicación en Salesforce y procesamiento) y los registros relacionados (edificio, equipo e intervención).
@@ -289,7 +289,7 @@ Se comprobó en la org entrando como cada persona:
 
 Capturas en `docs/evidencia-umbrales/`: [pantalla de Javier](docs/evidencia-umbrales/javier-umbrales.png) y [operadora sin acceso](docs/evidencia-umbrales/operadora-sin-acceso.png) e [inicio del coordinador](docs/evidencia-umbrales/coordinador-inicio.png).
 
-Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; Camila no los administra (solo consulta Signal_Log); operadora, administradora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
+Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; el permission set `Nova_Admin` por sí solo no administra umbrales (la amplitud de Camila viene de su perfil System Administrator); operadora, administradora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
 
 ## Decisiones
 
