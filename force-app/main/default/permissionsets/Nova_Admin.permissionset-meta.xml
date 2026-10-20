@@ -8,7 +8,7 @@
         <enabled>true</enabled>
         <name>Ver_Logs_Senal</name>
     </customPermissions>
-    <description>Administración de Nova Casa (Camila): consulta la traza de señales (Signal_Log): qué se aceptó, qué se rechazó y por qué, sin secretos. Solo lectura y acotada a Signal_Log; no accede a edificios, equipos, condiciones, intervenciones ni umbrales.</description>
+    <description>Administración de Nova Casa (Camila): investiga la traza (Signal_Log, BR-209) y tiene todas las pestañas de la app. Su amplitud de datos (incl. telemetría) viene del perfil System Administrator.</description>
     <fieldPermissions>
         <editable>false</editable>
         <field>Signal_Log__c.Asset_Id__c</field>
@@ -132,7 +132,19 @@
         <viewAllRecords>true</viewAllRecords>
     </objectPermissions>
     <tabSettings>
+        <tab>Estado_Operativo</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
         <tab>Signal_Log__c</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>Umbrales_de_Alerta</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
+    <tabSettings>
+        <tab>standard-WorkOrder</tab>
         <visibility>Visible</visibility>
     </tabSettings>
     <userPermissions>

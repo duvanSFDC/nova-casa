@@ -329,7 +329,7 @@ las reglas de compartición no pueden filtrar por un lookup.
 | `Nova_Operator` | Laura (operadora) | Lectura de edificios/activos/condición/WO de sus edificios + pantalla Estado operativo |
 | `Nova_Coordinator` | Javier (coordinador) | Lectura + avanza/cierra WO; edita los límites de los umbrales |
 | `Nova_Manager` | Armando / Hernando (gerentes) | Solo lectura por región + dashboard |
-| `Nova_Admin` | Camila (administradora) | **Solo** lectura de `Signal_Log__c` |
+| `Nova_Admin` | Camila (administradora) | Pestañas de la app + tarjeta de señales rechazadas del inicio. Camila es **System Administrator** (mayor privilegio + objetos de telemetría, directriz de Emiliano); su amplitud de datos la da el perfil |
 | `Nova_Integration` | Usuario de integración | Objetos y clases de la ingesta |
 | `Nova_Simulator_Access` | Usuario de integración | Acceso a la External Credential del simulador |
 
@@ -340,7 +340,7 @@ las reglas de compartición no pueden filtrar por un lookup.
 | `Ver_Intervenciones_Operador` | Operador | Tarjetas del inicio de Laura |
 | `Ver_Intervenciones_Coordinador` | Coordinador | Intervenciones en el inicio de Javier |
 | `Ver_Dashboard_Edificios` | Gerente | Dashboard de edificios |
-| `Ver_Logs_Senal` | Administradora | Lista de señales fallidas |
+| `Ver_Logs_Senal` | Administradora | Lista de señales rechazadas |
 
 **Grupos públicos**
 
