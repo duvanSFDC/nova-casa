@@ -329,7 +329,7 @@ las reglas de compartición no pueden filtrar por un lookup.
 | `Nova_Operator` | Laura (operadora) | Lectura de edificios/activos/condición/WO de sus edificios + pantalla Estado operativo |
 | `Nova_Coordinator` | Javier (coordinador) | Lectura + avanza/cierra WO; edita los límites de los umbrales |
 | `Nova_Manager` | Armando / Hernando (gerentes) | Solo lectura por región + dashboard |
-| `Nova_Admin` | Camila (administradora) | Pestañas de la app + tarjeta de señales rechazadas del inicio. Camila es **System Administrator** (mayor privilegio + objetos de telemetría, directriz de Emiliano); su amplitud de datos la da el perfil |
+| `Nova_Admin` | Camila (administradora) | Pestañas de la app + tarjeta de señales rechazadas del inicio + **FLS** de telemetría (`Asset_Condition__c`, para *Estado operativo*) y de umbrales (`Alert_Threshold__c`, que administra por completo). Camila es **System Administrator** (mayor privilegio + objetos de telemetría, directriz de Emiliano); la amplitud de **registros** la da el perfil, pero el FLS de campos custom lo aporta este permission set |
 | `Nova_Integration` | Usuario de integración | Objetos y clases de la ingesta |
 | `Nova_Simulator_Access` | Usuario de integración | Acceso a la External Credential del simulador |
 
