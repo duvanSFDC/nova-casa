@@ -50,15 +50,15 @@ Cada persona ve solo lo que su oficio necesita, y el recorte se aplica en el ser
 | Qué | Operador · Laura (`Nova_Operator`) | Coordinador · Javier (`Nova_Coordinator`) | Administradora · Camila (System Administrator + `Nova_Admin`) |
 | --- | --- | --- | --- |
 | Edificios (`Location`) y activos (`Asset`) | Lectura, solo sus edificios | Lectura, los edificios que coordina (en la demo, los tres) | Sí (System Administrator) |
-| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Sí (System Administrator) |
+| Lecturas vigentes (`Asset_Condition__c`) | Lectura, solo sus edificios | Lectura, sus edificios | Lectura de todas (el FLS de telemetría lo da `Nova_Admin`; los registros, el perfil) |
 | Intervenciones (`WorkOrder`) | Lectura de las de sus edificios | Lectura y edición: avanza y cierra las de sus edificios | Sí (avanzar y cerrar sigue siendo rol de Javier) |
 | Pantalla *Estado operativo* | Sí | Sí | Sí (tiene todas las pestañas) |
 | Inicio de la app | Estado operativo, intervenciones abiertas y edificios (permiso `Ver_Intervenciones_Operador`) | Intervenciones abiertas (permiso `Ver_Intervenciones_Coordinador`) | Señales rechazadas (permiso `Ver_Logs_Senal`) y registros recientes |
 | Errores técnicos (`Signal_Log__c`) | No | No | Lectura, desde la pestaña *Signal Logs* (BR-209); no se edita en el flujo |
-| Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | Sí (System Administrator) |
+| Umbrales de alerta (`Alert_Threshold__c`) | No | Edita solo los límites de advertencia y crítico, desde la pestaña *Umbrales de alerta*; no crea ni borra umbrales ni cambia su unidad o dirección | Los administra por completo (crea, edita, borra), desde la pestaña *Umbrales de alerta* (`Nova_Admin`) |
 | Crear, editar o borrar lecturas | No | No | Las escribe la ingesta |
 
-**Directriz de Emiliano (sobre el administrador):** la Administradora (Camila) es un **System Administrator**: naturalmente tiene el **mayor privilegio**, incluido el acceso a los **objetos de telemetría**, y ve **todas las pestañas** de la app. Investiga el `Signal_Log` como parte de su rol (BR-209), sin estar limitada a eso. La matriz recorta a las personas **operativas** (operador y coordinador); el administrador queda por encima de ese recorte. El permission set `Nova_Admin` aporta las pestañas de la app y la tarjeta de señales rechazadas del inicio; su amplitud de datos la da el perfil. Javier sigue siendo quien ajusta los dos límites de cada umbral.
+**Directriz de Emiliano (sobre el administrador):** la Administradora (Camila) es un **System Administrator**: naturalmente tiene el **mayor privilegio**, incluido el acceso a los **objetos de telemetría**, y ve **todas las pestañas** de la app. Investiga el `Signal_Log` como parte de su rol (BR-209), sin estar limitada a eso. La matriz recorta a las personas **operativas** (operador y coordinador); el administrador queda por encima de ese recorte. El permission set `Nova_Admin` aporta las pestañas de la app, la tarjeta de señales rechazadas del inicio y el **FLS** que necesitan las pantallas que no son de `Signal_Log`: la telemetría (`Asset_Condition__c`) de *Estado operativo* y los umbrales (`Alert_Threshold__c`), que Camila administra por completo. Esto es necesario porque los campos custom desplegados por metadata no otorgan FLS automáticamente, ni siquiera al perfil System Administrator; la amplitud de **registros** (ver todo) sí la da el perfil. Javier sigue siendo quien, como operativo, ajusta los dos límites de cada umbral.
 
 Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crítica vigente.
 
@@ -289,7 +289,7 @@ Se comprobó en la org entrando como cada persona:
 
 Capturas en `docs/evidencia-umbrales/`: [pantalla de Javier](docs/evidencia-umbrales/javier-umbrales.png) y [operadora sin acceso](docs/evidencia-umbrales/operadora-sin-acceso.png) e [inicio del coordinador](docs/evidencia-umbrales/coordinador-inicio.png).
 
-Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; el permission set `Nova_Admin` por sí solo no administra umbrales (la amplitud de Camila viene de su perfil System Administrator); operadora, administradora y usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
+Las pruebas lo cubren de forma determinista: `AlertThresholdAccessTest` (8 casos: Javier ajusta los límites pero no cambia unidad, dirección ni tipo de equipo, ni crea o borra; Camila, con `Nova_Admin`, administra los umbrales por completo (crea un umbral nuevo); la operadora y un usuario sin acceso no los leen; Javier no tiene *Customize Application*, *Modify Metadata* ni *API Enabled*; se rechazan límites vacíos, contradictorios, duplicados o con la clave equivocada), `AlertThresholdControllerTest` (5), `AlertThresholdsTest` (2), `OperatorAccessTest.theHomeShowsOpenWorkOrdersToOperatorsAndCoordinators` y las 10 pruebas de Jest de `alertThresholdEditor`.
 
 ## Decisiones
 
