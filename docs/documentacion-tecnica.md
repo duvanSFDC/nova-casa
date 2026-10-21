@@ -158,9 +158,6 @@ erDiagram
 **`Telemetry_Signal__e`** — el Platform Event (el contrato de la señal). 21 campos: identidad
 (`Message_Id__c`, `Delivery_Id__c`, `Source__c`), edificio/activo/medición/comunicación, fechas
 y `Raw_Payload__c` (el mensaje crudo, **solo en el evento**, nunca en el log).
-
-**`Asset_Signal_Log__c`** — objeto sin uso ni registros; queda privado hasta decidir si se elimina.
-
 ---
 
 ## 4. Código Apex

@@ -78,9 +78,6 @@ Nadie abre intervenciones a mano: desde US-205 las abre la ingesta ante una crí
 | --- | --- | --- |
 | *Usuario Integración* (solo API) | Llama al simulador y publica los eventos (`TelemetryIngestionService`, `TelemetryIngestionJob`) | `Nova_Integration` y `Nova_Simulator_Access` |
 | *Automated Process* | Corre el suscriptor del Platform Event: valida, clasifica, escribe el estado, los logs y las intervenciones | Plataforma; todas sus consultas y escrituras son `SYSTEM_MODE` explícito |
-
-`Asset_Signal_Log__c` no lo usa ningún código y no tiene registros; queda privado hasta decidir si se borra.
-
 ## Cómo investigar una señal (BR-209)
 
 Cada señal deja un `Signal_Log__c` que se guarda como registro, no en un log temporal. Camila lo consulta desde la pestaña **Signal Logs** de la app Nova Casa; entre las personas operativas (operador y coordinador) nadie la ve, y la traza no se edita en el flujo.
