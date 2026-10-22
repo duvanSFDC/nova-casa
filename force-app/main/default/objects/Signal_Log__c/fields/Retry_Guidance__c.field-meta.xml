@@ -34,7 +34,7 @@
 )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <inlineHelpText>Dice si se puede reintentar y, si no, qué hay que corregir primero: en Salesforce (catálogo o límites) o en el origen.</inlineHelpText>
-    <label>Retry Guidance</label>
+    <label>Guía de reintento</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Text</type>

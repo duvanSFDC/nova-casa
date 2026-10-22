@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Building_Id__c</fullName>
-    <label>Building Id</label>
+    <label>ID del edificio</label>
     <length>40</length>
     <required>false</required>
     <type>Text</type>

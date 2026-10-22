@@ -4,7 +4,7 @@
     <description>Código del edificio (Location.External_Id__c), copiado por un Flow al guardar. Existe para compartir por edificio (BR-208): las reglas de compartición no pueden filtrar por un lookup. No se edita a mano.</description>
     <externalId>false</externalId>
     <inlineHelpText>Código del edificio, lo llena el sistema al guardar.</inlineHelpText>
-    <label>Building Code</label>
+    <label>Código del edificio</label>
     <length>40</length>
     <required>false</required>
     <trackHistory>false</trackHistory>

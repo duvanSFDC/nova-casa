@@ -11,11 +11,11 @@
     <enableSharing>true</enableSharing>
     <enableStreamingApi>true</enableStreamingApi>
     <externalSharingModel>Private</externalSharingModel>
-    <label>Ingestion State</label>
+    <label>Estado de ingesta</label>
     <nameField>
         <label>Name</label>
         <type>Text</type>
     </nameField>
-    <pluralLabel>Ingestion States</pluralLabel>
+    <pluralLabel>Estados de ingesta</pluralLabel>
     <sharingModel>Private</sharingModel>
 </CustomObject>

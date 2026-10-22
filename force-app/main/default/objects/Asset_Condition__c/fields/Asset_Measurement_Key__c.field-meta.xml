@@ -4,7 +4,7 @@
     <caseSensitive>true</caseSensitive>
     <description>One current row per asset and measurement type. Format is the 18-character Asset Id, a colon, and the measurement type. Example: 02i000000000001AAA:pressure</description>
     <externalId>true</externalId>
-    <label>Asset Measurement Key</label>
+    <label>Clave de medición del equipo</label>
     <length>80</length>
     <required>true</required>
     <trackTrending>false</trackTrending>

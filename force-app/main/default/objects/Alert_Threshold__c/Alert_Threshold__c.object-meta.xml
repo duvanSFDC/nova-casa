@@ -14,13 +14,13 @@
     <enableSharing>false</enableSharing>
     <enableStreamingApi>false</enableStreamingApi>
     <externalSharingModel>Private</externalSharingModel>
-    <label>Alert Threshold</label>
+    <label>Umbral de alerta</label>
     <nameField>
         <displayFormat>UMB-{0000}</displayFormat>
-        <label>Threshold Number</label>
+        <label>Número de umbral</label>
         <type>AutoNumber</type>
     </nameField>
-    <pluralLabel>Alert Thresholds</pluralLabel>
+    <pluralLabel>Umbrales de alerta</pluralLabel>
     <searchLayouts></searchLayouts>
     <sharingModel>ReadWrite</sharingModel>
     <visibility>Public</visibility>

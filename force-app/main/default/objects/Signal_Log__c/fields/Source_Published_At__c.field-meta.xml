@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Source_Published_At__c</fullName>
     <description>Cuándo la entregó el simulador.</description>
-    <label>Source Published At</label>
+    <label>Publicada en origen el</label>
     <required>false</required>
     <type>DateTime</type>
 </CustomField>

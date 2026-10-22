@@ -3,7 +3,7 @@
     <fullName>Result__c</fullName>
     <description>Qué decidió el suscriptor con la señal. Es distinto de Status__c, que dice en qué etapa del flujo va (publicada o procesada).</description>
     <inlineHelpText>Aceptada: señal válida de un edificio y equipo conocidos. Rechazada: ver el motivo y el error. Duplicada: su messageId ya se había procesado. Atrasada: es más vieja que la lectura actual y no la reemplaza.</inlineHelpText>
-    <label>Result</label>
+    <label>Resultado</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>

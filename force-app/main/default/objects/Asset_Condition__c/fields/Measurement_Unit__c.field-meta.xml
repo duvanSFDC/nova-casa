@@ -3,7 +3,7 @@
     <fullName>Measurement_Unit__c</fullName>
     <description>Unit of the reading, copied from the signal. For example C or bar. Empty on the connectivity row.</description>
     <externalId>false</externalId>
-    <label>Measurement Unit</label>
+    <label>Unidad de medición</label>
     <length>40</length>
     <required>false</required>
     <trackTrending>false</trackTrending>

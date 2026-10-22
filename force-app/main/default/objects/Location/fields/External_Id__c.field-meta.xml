@@ -5,7 +5,7 @@
     <description>Código del edificio en el simulador (building.id, por ejemplo BLD-BOG-001). Una señal solo se acepta si su código existe aquí; la señal nunca crea edificios.</description>
     <externalId>true</externalId>
     <inlineHelpText>Código del edificio que envía el simulador, por ejemplo BLD-BOG-001.</inlineHelpText>
-    <label>External Id</label>
+    <label>Código del edificio</label>
     <length>40</length>
     <required>false</required>
     <trackHistory>false</trackHistory>

@@ -4,7 +4,7 @@
     <description>Desde este valor la lectura es Crítico, en la dirección de Alert Direction. El valor exacto ya es Crítico. Tiene que estar más allá del límite de advertencia en esa dirección; la regla Limits_Contradictory no deja guardar lo contrario. No puede quedar vacío (regla Limits_Required). Los números actuales son de ejemplo hasta que Emiliano defina los reales.</description>
     <externalId>false</externalId>
     <inlineHelpText>Valor en la unidad de este registro desde el que la lectura es Crítico. El valor exacto cuenta como Crítico.</inlineHelpText>
-    <label>Critical Limit</label>
+    <label>Límite crítico</label>
     <precision>16</precision>
     <required>false</required>
     <trackHistory>true</trackHistory>

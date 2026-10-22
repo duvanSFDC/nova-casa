@@ -5,7 +5,7 @@
     <description>Código del equipo en el simulador (asset.id, por ejemplo AST-BOG-PUMP-001). Una señal solo se acepta si su código existe aquí; la señal nunca crea equipos.</description>
     <externalId>true</externalId>
     <inlineHelpText>Código del equipo que envía el simulador, por ejemplo AST-BOG-PUMP-001.</inlineHelpText>
-    <label>External Id</label>
+    <label>Código del equipo</label>
     <length>40</length>
     <required>false</required>
     <trackHistory>false</trackHistory>

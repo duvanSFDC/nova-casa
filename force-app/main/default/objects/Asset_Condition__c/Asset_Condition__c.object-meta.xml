@@ -154,12 +154,12 @@
     <enableSharing>false</enableSharing>
     <enableStreamingApi>false</enableStreamingApi>
     <externalSharingModel>Private</externalSharingModel>
-    <label>Asset Condition</label>
+    <label>Estado del equipo</label>
     <nameField>
-        <label>Asset Condition Name</label>
+        <label>Nombre del estado</label>
         <type>Text</type>
     </nameField>
-    <pluralLabel>Asset Conditions</pluralLabel>
+    <pluralLabel>Estados de equipo</pluralLabel>
     <searchLayouts></searchLayouts>
     <sharingModel>Private</sharingModel>
     <visibility>Public</visibility>
