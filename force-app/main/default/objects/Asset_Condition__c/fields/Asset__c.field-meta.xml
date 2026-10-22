@@ -3,7 +3,7 @@
     <fullName>Asset__c</fullName>
     <deleteConstraint>Restrict</deleteConstraint>
     <description>Asset this reading belongs to. Required, because a condition without an asset cannot appear on the operator screen.</description>
-    <label>Asset</label>
+    <label>Equipo</label>
     <referenceTo>Asset</referenceTo>
     <relationshipLabel>Asset Conditions</relationshipLabel>
     <relationshipName>Asset_Conditions</relationshipName>

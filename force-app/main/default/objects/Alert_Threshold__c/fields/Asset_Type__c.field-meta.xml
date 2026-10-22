@@ -4,7 +4,7 @@
     <description>Valor de Asset.Asset_Type__c al que aplica el registro, por ejemplo WATER_PUMP.</description>
     <externalId>false</externalId>
     <inlineHelpText>Tipo de equipo tal como está en el campo Asset Type del activo, por ejemplo WATER_PUMP.</inlineHelpText>
-    <label>Asset Type</label>
+    <label>Tipo de equipo</label>
     <length>40</length>
     <required>false</required>
     <type>Text</type>

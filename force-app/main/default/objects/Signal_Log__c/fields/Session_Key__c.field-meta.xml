@@ -3,7 +3,7 @@
     <fullName>Session_Key__c</fullName>
     <description>Identidad de la sesión del simulador (inicio de sesión). Con el messageId forma la identidad de deduplicación: el simulador reinicia la numeración por sesión.</description>
     <externalId>false</externalId>
-    <label>Session Key</label>
+    <label>Clave de sesión</label>
     <length>40</length>
     <required>false</required>
     <type>Text</type>

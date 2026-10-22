@@ -3,7 +3,7 @@
     <fullName>Measurement_Type__c</fullName>
     <description>Kind of reading, copied from the signal. Temperature and pressure of the same asset are two rows.</description>
     <externalId>false</externalId>
-    <label>Measurement Type</label>
+    <label>Tipo de medición</label>
     <length>40</length>
     <required>true</required>
     <trackTrending>false</trackTrending>

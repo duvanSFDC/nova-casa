@@ -25,7 +25,7 @@
 )</formula>
     <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
     <inlineHelpText>Procesada: aceptada. Rechazada: el dato no sirve, ver el motivo. Duplicada: reenvío de un mensaje ya procesado. Atrasada: más vieja que la lectura vigente. Fallida: un problema técnico, no del dato. Pendiente: publicada y aún sin procesar.</inlineHelpText>
-    <label>Investigation Status</label>
+    <label>Estado de investigación</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Text</type>

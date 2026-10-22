@@ -2,7 +2,7 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Communication_Status__c</fullName>
     <description>Si el dispositivo responde, según la última señal de conectividad (communication.status). Se guarda en la fila del equipo cuyo tipo de medición es la conectividad; en esa fila no hay valor ni unidad.</description>
-    <label>Communication Status</label>
+    <label>Estado de comunicación</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
@@ -18,12 +18,12 @@
             <value>
                 <fullName>LOST</fullName>
                 <default>false</default>
-                <label>Lost</label>
+                <label>Perdida</label>
             </value>
             <value>
                 <fullName>RESTORED</fullName>
                 <default>false</default>
-                <label>Restored</label>
+                <label>Restablecida</label>
             </value>
         </valueSetDefinition>
     </valueSet>

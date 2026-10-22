@@ -4,7 +4,7 @@
     <description>Desde este valor la lectura es Advertencia, en la dirección de Alert Direction. El valor exacto ya es Advertencia. No puede quedar vacío (regla Limits_Required). Los números actuales son de ejemplo hasta que Emiliano defina los reales.</description>
     <externalId>false</externalId>
     <inlineHelpText>Valor en la unidad de este registro desde el que la lectura es Advertencia. El valor exacto cuenta como Advertencia.</inlineHelpText>
-    <label>Warning Limit</label>
+    <label>Límite de advertencia</label>
     <precision>16</precision>
     <required>false</required>
     <trackHistory>true</trackHistory>

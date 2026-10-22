@@ -4,7 +4,7 @@
     <description>Código de measurement.type que envía el simulador, por ejemplo WATER_PRESSURE.</description>
     <externalId>false</externalId>
     <inlineHelpText>Tipo de medición tal como lo envía el simulador, por ejemplo WATER_PRESSURE.</inlineHelpText>
-    <label>Measurement Type</label>
+    <label>Tipo de medición</label>
     <length>40</length>
     <required>false</required>
     <type>Text</type>

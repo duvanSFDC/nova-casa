@@ -4,7 +4,7 @@
     <description>Única unidad compatible para esta medición, por ejemplo BAR. Una señal con otra unidad se rechaza como incompatible.</description>
     <externalId>false</externalId>
     <inlineHelpText>Unidad que debe traer la señal, por ejemplo BAR. Otra unidad se rechaza.</inlineHelpText>
-    <label>Unit</label>
+    <label>Unidad</label>
     <length>40</length>
     <required>false</required>
     <type>Text</type>

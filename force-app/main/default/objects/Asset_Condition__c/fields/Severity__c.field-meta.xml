@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Severity__c</fullName>
-    <description>Result of comparing the reading with the thresholds. The screen shows this value. It does not calculate it.</description>
-    <label>Severity</label>
+    <description>Resultado de comparar la lectura con los umbrales. La pantalla muestra este valor; no lo calcula.</description>
+    <label>Severidad</label>
     <required>true</required>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
@@ -18,12 +18,12 @@
             <value>
                 <fullName>Warning</fullName>
                 <default>false</default>
-                <label>Warning</label>
+                <label>Advertencia</label>
             </value>
             <value>
                 <fullName>Critical</fullName>
                 <default>false</default>
-                <label>Critical</label>
+                <label>Crítico</label>
             </value>
         </valueSetDefinition>
     </valueSet>

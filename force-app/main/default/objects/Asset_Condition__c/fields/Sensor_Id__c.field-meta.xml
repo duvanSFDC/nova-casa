@@ -3,7 +3,7 @@
     <fullName>Sensor_Id__c</fullName>
     <description>Dispositivo que produjo la lectura vigente (sensorId de la señal).</description>
     <externalId>false</externalId>
-    <label>Sensor Id</label>
+    <label>ID del sensor</label>
     <length>40</length>
     <required>false</required>
     <trackTrending>false</trackTrending>

@@ -3,7 +3,7 @@
     <fullName>Measurement_Value__c</fullName>
     <description>Value of the latest valid reading for this asset and measurement type. Empty on the connectivity row, which only has Communication_Status__c.</description>
     <externalId>false</externalId>
-    <label>Measurement Value</label>
+    <label>Valor de la medición</label>
     <precision>16</precision>
     <required>false</required>
     <scale>4</scale>

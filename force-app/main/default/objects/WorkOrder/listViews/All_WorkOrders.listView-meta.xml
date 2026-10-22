@@ -8,5 +8,5 @@
     <columns>Priority</columns>
     <columns>Status</columns>
     <filterScope>Everything</filterScope>
-    <label>All Interventions</label>
+    <label>Todas las intervenciones</label>
 </ListView>

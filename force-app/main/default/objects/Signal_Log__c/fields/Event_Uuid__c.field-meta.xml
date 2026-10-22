@@ -4,7 +4,7 @@
     <caseSensitive>true</caseSensitive>
     <description>EventUuid del Platform Event publicado. Une la publicación con el procesamiento.</description>
     <externalId>true</externalId>
-    <label>Event Uuid</label>
+    <label>UUID del evento</label>
     <length>64</length>
     <required>false</required>
     <type>Text</type>

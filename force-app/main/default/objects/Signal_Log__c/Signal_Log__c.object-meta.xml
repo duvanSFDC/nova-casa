@@ -12,13 +12,13 @@
     <enableSharing>true</enableSharing>
     <enableStreamingApi>true</enableStreamingApi>
     <externalSharingModel>Private</externalSharingModel>
-    <label>Signal Log</label>
+    <label>Registro de señal</label>
     <nameField>
         <displayFormat>LOG-{000000}</displayFormat>
-        <label>Log Number</label>
+        <label>Número de registro</label>
         <type>AutoNumber</type>
     </nameField>
-    <pluralLabel>Signal Logs</pluralLabel>
+    <pluralLabel>Registros de señal</pluralLabel>
     <searchLayouts>
         <lookupDialogsAdditionalFields>Message_Id__c</lookupDialogsAdditionalFields>
         <lookupDialogsAdditionalFields>Investigation_Status__c</lookupDialogsAdditionalFields>

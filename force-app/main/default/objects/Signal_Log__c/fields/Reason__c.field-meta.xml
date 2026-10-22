@@ -3,7 +3,7 @@
     <fullName>Reason__c</fullName>
     <description>Por qué se rechazó la señal. Solo se llena cuando Result__c es Rejected. El detalle legible (qué campo o qué valor) queda en Error__c.</description>
     <inlineHelpText>Motivo del rechazo. El detalle está en el campo Error.</inlineHelpText>
-    <label>Reason</label>
+    <label>Motivo</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>

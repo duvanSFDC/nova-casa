@@ -4,7 +4,7 @@
     <defaultValue>false</defaultValue>
     <description>Si es seguro volver a procesar la señal. Verdadero cuando el rechazo se corrige en Salesforce (por ejemplo, un equipo que faltaba en el catálogo). Falso cuando el dato de origen está mal y reprocesarlo daría el mismo resultado.</description>
     <inlineHelpText>Marcado: se puede reintentar después de corregir el dato en Salesforce. Sin marcar: el problema está en la señal original.</inlineHelpText>
-    <label>Retry Safe</label>
+    <label>Reintento seguro</label>
     <trackTrending>false</trackTrending>
     <type>Checkbox</type>
 </CustomField>

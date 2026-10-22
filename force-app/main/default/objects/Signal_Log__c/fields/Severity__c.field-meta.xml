@@ -3,7 +3,7 @@
     <fullName>Severity__c</fullName>
     <description>Severidad de una medición aceptada, según los límites de Alert_Threshold__c vigentes cuando se procesó. Vacío en rechazos y en señales de conectividad. Cambiar un límite después no la modifica.</description>
     <inlineHelpText>Normal, Advertencia o Crítico con los límites vigentes al procesar la señal.</inlineHelpText>
-    <label>Severity</label>
+    <label>Severidad</label>
     <required>false</required>
     <trackTrending>false</trackTrending>
     <type>Picklist</type>
