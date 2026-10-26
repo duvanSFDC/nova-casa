@@ -50,4 +50,4 @@ scripts/                  Scripts de apoyo (Apex anónimo, utilidades)
 
 ## Documentación
 
-La documentación técnica completa (modelo de datos, clases, seguridad, decisiones de diseño) se mantiene aparte, en `docs/documentacion-tecnica.md` y en el documento del equipo.
+La documentación técnica completa (modelo de datos, clases, seguridad, decisiones de diseño) se mantiene aparte, en el documento del equipo.
