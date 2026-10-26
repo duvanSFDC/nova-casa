@@ -51,3 +51,6 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
+
+# Agent skills instaladas con `npx skills` (locales; se reinstalan desde skills-lock.json)
+.agents/
