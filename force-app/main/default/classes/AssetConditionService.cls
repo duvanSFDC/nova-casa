@@ -112,9 +112,11 @@ public inherited sharing class AssetConditionService {
 
     private static String lateDetail(Datetime current) {
         if (current == null) {
-            return 'Otra señal más reciente del mismo activo llegó en este lote; esta no reemplaza el estado.';
+            return 'Llegó otra señal más reciente del mismo equipo en este lote; esta no reemplaza el estado actual.';
         }
-        return 'La lectura actual (' + current.formatGmt('yyyy-MM-dd\'T\'HH:mm:ss\'Z\'') + ') es igual o más nueva; esta no reemplaza el estado.';
+        return 'El equipo ya tenía una lectura más reciente (del ' +
+            current.format('dd/MM/yyyy HH:mm', 'America/Bogota') +
+            '); esta señal no reemplaza el estado actual.';
     }
 
     /**
